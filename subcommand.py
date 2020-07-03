@@ -21,10 +21,11 @@ class Subcommand:
         self.parser = subparsers.add_parser(name, help=help)
         self.parser.set_defaults(func=self.on_command)
         self.on_parser_init(self.parser)
-        if subparsers.metavar:
-            subparsers.metavar = subparsers.metavar + ', ' + name
-        else:
-            subparsers.metavar = name
+        # if subparsers.metavar:
+        #     subparsers.metavar = subparsers.metavar + ', ' + name
+        # else:
+        #     subparsers.metavar = name
+        subparsers.metavar = 'sub-commands'
 
         # if dependency:
         #     if type(dependency) is str:
