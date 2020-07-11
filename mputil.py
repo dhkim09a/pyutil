@@ -1,5 +1,6 @@
 
 import multiprocessing as mp
+import signal
 import sys
 import traceback
 import uuid
@@ -42,6 +43,14 @@ class LogExceptions(object):
         return result
 
 
+def _sighandler(signum, frame):
+    if signum == signal.SIGALRM:
+        signal.signal(signal.SIGALRM, _sighandler)
+        raise TimeoutError('Timeout expired')
+    else:
+        raise Exception('Unexpected signal received: ' + str(signum))
+
+
 def _on_done(result):
     self_id, count, ret = result
     # print('done: self_id: ' + str(self_id) + ', count: ' + str(count) + ', res: ' + str(ret))
@@ -62,11 +71,24 @@ def _on_done(result):
 def _func_wrapper(self_id, ret: list, arglist: List[Tuple]):
     count: int = 0
     # print('wrapper: id: ' + str(self_id) + ', ret: ' + str(ret))
+    self = _mputil_map[self_id]
+
+    if self.task_timeout > 0:
+        signal.signal(signal.SIGALRM, _sighandler)
 
     for argset in arglist:
         func, args, kwargs = argset
         # print('wrapper: self_id: ' + str(self_id) + ', func: ' + str(func) + ', args: ' + str(args) + ', kwargs: ' + str(kwargs))
-        result = func(*args, **kwargs)
+        if self.task_timeout > 0:
+            signal.alarm(self.task_timeout)
+        try:
+            result = func(*args, **kwargs)
+            if self.task_timeout > 0:
+                signal.alarm(0)
+        except Exception as e:
+            print('error: ' + str(e) + ' while processing *args: ' + str(args) + ', **kwargs: ' + str(kwargs))
+            result = None
+
         if result is not None:
             try:
                 ret.append(result)
@@ -87,8 +109,9 @@ class MpUtil:
     buffer: List[List]
     id = None
     maxchunksize: int
+    task_timeout: int
 
-    def __init__(self, processes: int = 0, maxchunksize: int = 1, total: int = 0, desc: str = ""):
+    def __init__(self, processes: int = 0, maxchunksize: int = 1, total: int = 0, desc: str = "", task_timeout=0):
         if processes == 0:
             processes = mp.cpu_count()
 
@@ -98,7 +121,6 @@ class MpUtil:
 
         self.queue = []
         self.results = self.ctx.list([])
-        self.pool = mp.Pool(processes=processes)
         self.pbar = tqdm(total=total, desc=desc)
 
         self.buffer = self.ctx.list()
@@ -106,9 +128,12 @@ class MpUtil:
             self.buffer.append(self.ctx.list())
 
         self.maxchunksize = maxchunksize
+        self.task_timeout = task_timeout
 
         self.id = id(self)
         _mputil_map[self.id] = self
+
+        self.pool = mp.Pool(processes=processes)
 
     def __enter__(self):
         return self

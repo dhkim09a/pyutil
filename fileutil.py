@@ -4,6 +4,10 @@ import shutil
 import subprocess
 import sys
 
+import sh
+
+from dhkim_toolkit.util.decorators import static_vars
+
 
 def remove_contents(folder: str):
     for filename in os.listdir(folder):
@@ -77,4 +81,18 @@ def find_recursive(root: str, name_patterns: list = None, ignored_dirs=None, typ
                 for fname in fnames:
                     paths.append(os.path.join(root, fname))
         return paths
+
+@static_vars(mkdir=sh.mkdir.bake(p=True),
+             rsync=sh.rsync.bake(a=True, partial=True, delete=True))
+def overwrite(src: str, dst: str):
+    if os.path.isdir(src):
+        src = src + os.path.sep
+
+    if not os.path.exists(dst):
+        overwrite.mkdir(os.path.dirname(dst))
+    elif os.path.isdir(dst):
+        dst = dst + os.path.sep
+
+    overwrite.rsync(src, dst)
+
 
