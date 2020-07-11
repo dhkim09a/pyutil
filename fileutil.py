@@ -6,7 +6,7 @@ import sys
 
 import sh
 
-from dhkim_toolkit.util.decorators import static_vars
+from .decorators import static_vars
 
 
 def remove_contents(folder: str):

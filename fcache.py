@@ -4,8 +4,8 @@ from typing import Union, List
 
 import sh
 
-from dhkim_toolkit.util.fileutil import find_recursive
-from dhkim_toolkit.util.mputil import MpUtil
+from .fileutil import find_recursive
+from .mputil import MpUtil
 
 
 def hash_str(string: str) -> str:
