@@ -17,7 +17,9 @@ class Subcommand:
     #     print('Python package \'' + name + '\' is required but not found')
     #     return False
 
-    def __init__(self, name: str, subparsers, help='', dependency: Union[str, List[str]] = ''):
+    def __init__(self, subparsers, name: str = None, help='', dependency: Union[str, List[str]] = ''):
+        if name is None:
+            name = type(self).__name__.lower()
         self.parser = subparsers.add_parser(name, help=help)
         self.parser.set_defaults(func=self.on_command)
         self.on_parser_init(self.parser)
