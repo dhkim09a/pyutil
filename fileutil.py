@@ -21,7 +21,7 @@ def remove_contents(folder: str):
             print('Failed to delete %s. Reason: %s' % (file_path, e))
 
 
-def find_recursive_unix(root: str, name_patterns: list =None, ignored_dirs=None, type='any', depth=-1):
+def find_recursive_unix(root: str, name_patterns: list =None, ignored_dirs=None, type='any', depth=-1, sort=False):
     # find . -type d \( -path dir1 -o -path dir2 -o -path dir3 \) -prune -o -print
     find_cmd = 'find ' + root + ' '
     find_filter = ''
@@ -53,7 +53,10 @@ def find_recursive_unix(root: str, name_patterns: list =None, ignored_dirs=None,
     else:
         find_cmd += find_filter
     bout = subprocess.check_output(find_cmd, shell=True)
-    return bout.decode('ascii').splitlines()
+    out = bout.decode('ascii').splitlines()
+    if sort:
+        out.sort()
+    return out
 
 
 def check_ignored(path, ignored_dirs):
@@ -64,9 +67,9 @@ def check_ignored(path, ignored_dirs):
     return False
 
 
-def find_recursive(root: str, name_patterns: list = None, ignored_dirs=None, type='any', depth=-1):
+def find_recursive(root: str, name_patterns: list = None, ignored_dirs=None, type='any', depth=-1, sort=False):
     if sys.platform == "darwin" or sys.platform.startswith('linux'):
-        return find_recursive_unix(root, name_patterns=name_patterns, ignored_dirs=ignored_dirs, type=type, depth=depth)
+        return find_recursive_unix(root, name_patterns=name_patterns, ignored_dirs=ignored_dirs, type=type, depth=depth, sort=sort)
     else:
         paths = []
         for root, dirs, fnames in os.walk(root):
