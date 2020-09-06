@@ -1,4 +1,3 @@
-
 import multiprocessing as mp
 import signal
 import sys
@@ -10,18 +9,22 @@ from tqdm import tqdm
 
 _mputil_map: dict = {}
 
+
 # https://gist.github.com/EdwinChan/3c13d3a746bb3ec5082f
 # globalize decorator for inner functions
 def globalize(func):
-  def result(*args, **kwargs):
-    return func(*args, **kwargs)
-  result.__name__ = result.__qualname__ = uuid.uuid4().hex
-  setattr(sys.modules[result.__module__], result.__name__, result)
-  return result
+    def result(*args, **kwargs):
+        return func(*args, **kwargs)
+
+    result.__name__ = result.__qualname__ = uuid.uuid4().hex
+    setattr(sys.modules[result.__module__], result.__name__, result)
+    return result
+
 
 # Shortcut to multiprocessing's logger
 def error(msg, *args):
     return mp.get_logger().error(msg, *args)
+
 
 class LogExceptions(object):
     def __init__(self, callable):
@@ -86,6 +89,7 @@ def _func_wrapper(self_id, ret: list, arglist: List[Tuple]):
             if self.task_timeout > 0:
                 signal.alarm(0)
         except Exception as e:
+            traceback.print_tb(e.__traceback__)
             print('error: ' + str(e) + ' while processing *args: ' + str(args) + ', **kwargs: ' + str(kwargs))
             result = None
 
@@ -93,7 +97,7 @@ def _func_wrapper(self_id, ret: list, arglist: List[Tuple]):
             try:
                 ret.append(result)
             except Exception as e:
-                print('can\'t handle results from ' + str(func) + '(' + str(args) + ', ' +  str(kwargs) + '). ' + str(e))
+                print('can\'t handle results from ' + str(func) + '(' + str(args) + ', ' + str(kwargs) + '). ' + str(e))
         count += 1
 
     return self_id, count, ret
