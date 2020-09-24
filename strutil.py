@@ -42,7 +42,7 @@ def auto_print(string: str):
 
 def strcompare(left: str, right: str, width: int = None, highlight: bool = True) -> str:
     def __compose_line(ll: str, rl: str, padding: int):
-        return str('{:' + str(len(ll) + padding) + '} | {}').format(str(ll), str(rl)) + '\n'
+        return str('{:' + str(len(str(ll)) + padding) + '} | {}').format(str(ll), str(rl)) + '\n'
 
     lls = left.splitlines()
     rls = right.splitlines()
