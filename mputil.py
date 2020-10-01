@@ -7,7 +7,7 @@ from typing import List, Tuple
 
 from tqdm import tqdm
 
-_mputil_map: dict = {}
+_obj_idmap: dict = {}
 
 
 # https://gist.github.com/EdwinChan/3c13d3a746bb3ec5082f
@@ -49,16 +49,16 @@ class LogExceptions(object):
 def _sighandler(signum, frame):
     if signum == signal.SIGALRM:
         signal.signal(signal.SIGALRM, _sighandler)
-        raise TimeoutError('Timeout expired')
+        raise TimeoutError('MpUtil: Timeout expired')
     else:
-        raise Exception('Unexpected signal received: ' + str(signum))
+        raise Exception('MpUtil: Unexpected signal received: ' + str(signum))
 
 
 def _on_done(result):
     self_id, count, ret = result
     # print('done: self_id: ' + str(self_id) + ', count: ' + str(count) + ', res: ' + str(ret))
 
-    self = _mputil_map[self_id]
+    self = _obj_idmap[self_id]
 
     with self.free.get_lock():
         self.results.extend(ret)
@@ -74,7 +74,7 @@ def _on_done(result):
 def _func_wrapper(self_id, ret: list, arglist: List[Tuple]):
     count: int = 0
     # print('wrapper: id: ' + str(self_id) + ', ret: ' + str(ret))
-    self = _mputil_map[self_id]
+    self = _obj_idmap[self_id]
 
     if self.task_timeout > 0:
         signal.signal(signal.SIGALRM, _sighandler)
@@ -85,19 +85,22 @@ def _func_wrapper(self_id, ret: list, arglist: List[Tuple]):
         if self.task_timeout > 0:
             signal.alarm(self.task_timeout)
         try:
-            result = func(*args, **kwargs)
+            if self.arg0:
+                result = func(*args, arg0=self.arg0, **kwargs)
+            else:
+                result = func(*args, **kwargs)
             if self.task_timeout > 0:
                 signal.alarm(0)
         except Exception as e:
             traceback.print_tb(e.__traceback__)
-            print('error: ' + str(e) + ' while processing *args: ' + str(args) + ', **kwargs: ' + str(kwargs))
+            print('MpUtil error: ' + str(e) + ' while processing *args: ' + str(args) + ', **kwargs: ' + str(kwargs))
             result = None
 
         if result is not None:
             try:
                 ret.append(result)
             except Exception as e:
-                print('can\'t handle results from ' + str(func) + '(' + str(args) + ', ' + str(kwargs) + '). ' + str(e))
+                print('MpUtil error: can\'t handle results from ' + str(func) + '(' + str(args) + ', ' + str(kwargs) + '). ' + str(e))
         count += 1
 
     return self_id, count, ret
@@ -114,8 +117,10 @@ class MpUtil:
     id = None
     maxchunksize: int
     task_timeout: int
+    arg0: object
 
-    def __init__(self, processes: int = 0, maxchunksize: int = 1, total: int = 0, desc: str = "", task_timeout=0):
+    def __init__(self, processes: int = 0, maxchunksize: int = 1, total: int = 0, desc: str = "", task_timeout=0,
+                 arg0: object = None):
         if processes == 0:
             processes = mp.cpu_count()
 
@@ -133,9 +138,10 @@ class MpUtil:
 
         self.maxchunksize = maxchunksize
         self.task_timeout = task_timeout
+        self.arg0 = arg0
 
         self.id = id(self)
-        _mputil_map[self.id] = self
+        _obj_idmap[self.id] = self
 
         self.pool = mp.Pool(processes=processes)
 
@@ -146,7 +152,7 @@ class MpUtil:
         pass
 
     def __del__(self):
-        _mputil_map.pop(id(self))
+        _obj_idmap.pop(id(self))
 
     def flush(self):
         ret: list = self.buffer.pop()

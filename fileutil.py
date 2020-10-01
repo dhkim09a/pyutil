@@ -3,6 +3,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 
 import sh
 
@@ -85,6 +86,7 @@ def find_recursive(root: str, name_patterns: list = None, ignored_dirs=None, typ
                     paths.append(os.path.join(root, fname))
         return paths
 
+
 @static_vars(mkdir=sh.mkdir.bake(p=True),
              rsync=sh.rsync.bake(a=True, partial=True, delete=True))
 def overwrite(src: str, dst: str):
@@ -98,4 +100,16 @@ def overwrite(src: str, dst: str):
 
     overwrite.rsync(src, dst)
 
+
+def get_memtmpdir(suffix=None, prefix=None, dir=None):
+    if dir:
+        return tempfile.TemporaryDirectory(suffix=suffix, prefix=prefix, dir=dir)
+
+    memdirs = ['/dev/shm']
+    for dir in memdirs:
+        if not os.path.isdir(dir):
+            continue
+        return tempfile.TemporaryDirectory(suffix=suffix, prefix=prefix, dir=dir)
+
+    return None
 
