@@ -1,0 +1,32 @@
+from unittest import TestCase
+
+import yautil
+import matplotlib.pyplot as plt
+
+
+class TestPlotCdf(TestCase):
+    def test_basic(self):
+        data = [0, 1, 2, 2, 3, 4]
+        yautil.plot_cdf(data, block=False)
+        plt.pause(1)
+        plt.close()
+
+    def test_xlabel(self):
+        data = ['test values', 0, 1, 2, 2, 3, 4]
+        yautil.plot_cdf(data, block=False)
+        plt.pause(1)
+        plt.close()
+
+    def test_subfigures(self):
+        data = [0, 1, 2, 2, 3, 4]
+        yautil.plot_cdf(data, data, block=False)
+        plt.pause(1)
+        plt.close()
+
+    def test_multi_lines(self):
+        data1 = ['test values 1', 0, 1, 2, 2, 3, 4]
+        data2 = ['test values 2', 1, 2, 2, 3, 4]
+        yautil.plot_cdf((data1, data2), block=False)
+        plt.pause(1)
+        plt.close()
+

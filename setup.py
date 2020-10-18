@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="yautil", # Replace with your own username
-    version="0.0.2",
+    version="0.0.3",
     author="Donghwi Kim",
     author_email="dhkim09@kaist.ac.kr",
     description="Yet Another Python util.",
@@ -22,5 +22,7 @@ setuptools.setup(
         'tqdm',
         'sh',
     ],
+    test_suite='nose.collector',
+    test_require=['nose'],
     python_requires='>=3.8',
 )
