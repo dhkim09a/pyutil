@@ -85,3 +85,22 @@ class TestSubcommand(TestCase):
 
         cmd = 'cmda'
         parser.exec_subcommands(argsA)
+
+    def test_argcomplete(self):
+        cmd = ''
+
+        class CmdA(Subcommand):
+            def on_parser_init(self, parser: argparse.ArgumentParser):
+                pass
+
+            def on_command(self, args):
+                assert cmd == 'cmda'
+
+        parser = SubcommandParser(argcomplete=True)
+
+        parser.add_subcommands(CmdA())
+
+        cmd = 'cmda'
+        args = parser.parse_args([cmd])
+        parser.exec_subcommands()
+

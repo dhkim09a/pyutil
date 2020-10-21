@@ -1,6 +1,7 @@
 import argparse
 from typing import Union, List
 
+# PYTHON_ARGCOMPLETE_OK
 
 class Subcommand:
     parser: argparse.ArgumentParser
@@ -48,7 +49,12 @@ class SubcommandParser(argparse.ArgumentParser):
     subparsers = None
     args = None
 
-    argcomplete = True
+    argcomplete: bool
+
+    def __init__(self, *args, argcomplete: bool = False, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.argcomplete = argcomplete
 
     def add_subcommands(self, *subcommands: Subcommand):
         if not self.subparsers:
@@ -61,6 +67,12 @@ class SubcommandParser(argparse.ArgumentParser):
                 subcommand._register(self.subparsers)
 
     def parse_args(self, *args, **kwargs) -> object:
+        if self.argcomplete:
+            try:
+                import argcomplete
+                argcomplete.autocomplete(super())
+            except ImportError:
+                print('error: install \'argcomplete\' package to enable bash autocomplete')
         self.args = super().parse_args(*args, **kwargs)
         return self.args
 
