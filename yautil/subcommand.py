@@ -1,7 +1,13 @@
+# PYTHON_ARGCOMPLETE_OK
+
 import argparse
 from typing import Union, List
 
-# PYTHON_ARGCOMPLETE_OK
+try:
+    import argcomplete
+except ImportError:
+    pass
+
 
 class Subcommand:
     parser: argparse.ArgumentParser
@@ -13,14 +19,8 @@ class Subcommand:
     def on_command(self, args):
         raise NotImplementedError
 
-    # def ensure_package(self, name: str) -> bool:
-    #     if name in globals():
-    #         return True
-    #     print('Python package \'' + name + '\' is required but not found')
-    #     return False
-
-    def _register(self, subparsers):
-        self.parser = subparsers.add_parser(self.name, help=help)
+    def _register(self, subparsers, _help=None):
+        self.parser = subparsers.add_parser(self.name, help=_help)
         self.parser.set_defaults(func=self.on_command)
         self.on_parser_init(self.parser)
         if subparsers.metavar:
@@ -28,21 +28,10 @@ class Subcommand:
         else:
             subparsers.metavar = self.name
 
-    def __init__(self, subparsers = None, name: str = None, help='', dependency: Union[str, List[str]] = ''):
+    def __init__(self, subparsers = None, name: str = None, help: str = '', dependency: Union[str, List[str]] = ''):
         self.name = name if name else type(self).__name__.lower()
         if subparsers:
-            self._register(subparsers)
-
-        # if dependency:
-        #     if type(dependency) is str:
-        #         if self.ensure_package(dependency) is False:
-        #             quit(-1)
-        #     elif type(dependency) is list:
-        #         for name in dependency:
-        #             if self.ensure_package(name) is False:
-        #                 quit(-1)
-        #     else:
-        #         print("Internal error")
+            self._register(subparsers, _help=help)
 
 
 class SubcommandParser(argparse.ArgumentParser):
@@ -68,10 +57,9 @@ class SubcommandParser(argparse.ArgumentParser):
 
     def parse_args(self, *args, **kwargs) -> object:
         if self.argcomplete:
-            try:
-                import argcomplete
+            if 'argcomplete' in globals():
                 argcomplete.autocomplete(super())
-            except ImportError:
+            else:
                 print('error: install \'argcomplete\' package to enable bash autocomplete')
         self.args = super().parse_args(*args, **kwargs)
         return self.args

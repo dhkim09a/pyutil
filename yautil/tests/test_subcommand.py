@@ -104,3 +104,23 @@ class TestSubcommand(TestCase):
         args = parser.parse_args([cmd])
         parser.exec_subcommands()
 
+    def test_help(self):
+        cmd = ''
+
+        class CmdA(Subcommand):
+            def on_parser_init(self, parser: argparse.ArgumentParser):
+                pass
+
+            def on_command(self, args):
+                pass
+
+        parser = SubcommandParser()
+
+        parser.add_subcommands(CmdA())
+
+        cmd = '--help'
+
+        try:
+            args = parser.parse_args([cmd])
+        except:
+            pass
