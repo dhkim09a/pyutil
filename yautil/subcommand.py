@@ -58,9 +58,9 @@ class SubcommandParser(argparse.ArgumentParser):
     def parse_args(self, *args, **kwargs) -> object:
         if self.argcomplete:
             if 'argcomplete' in globals():
-                argcomplete.autocomplete(super())
+                argcomplete.autocomplete(self)
             else:
-                print('error: install \'argcomplete\' package to enable bash autocomplete')
+                print('warning: install \'argcomplete\' package to enable bash autocomplete')
         self.args = super().parse_args(*args, **kwargs)
         return self.args
 
