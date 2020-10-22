@@ -10,7 +10,9 @@ def __plot(*data,
            ylim: List = None,
            padding: float = 0.2,
            block: bool = True,
-           legend_loc: str = 'best'):
+           legend_loc: str = 'best',
+           font_family: str = None,
+           ):
     """
     Usage examples:
 
@@ -45,14 +47,18 @@ def __plot(*data,
 
     fig = plt.figure()
     plt.clf()
-    plt.rc('font', family='NanumGothicOTF')
+    if font_family:
+        # 'NanumGothicOTF'
+        plt.rc('font', family=font_family)
 
     for i, subplot_data in enumerate(data):
         if not isinstance(subplot_data, tuple):
             assert isinstance(subplot_data, list)
             subplot_data = (subplot_data,)
 
-        subplot = fig.add_subplot((len(data) - 1) / maxcol + 1, min(len(data), maxcol), i + 1)
+        subplot = fig.add_subplot(int((len(data) - 1) / maxcol + 1),
+                                  int(min(len(data), maxcol)),
+                                  int(i + 1))
         if i < len(titles):
             subplot.title.set_text(titles[i])
         if xlabel:
@@ -121,7 +127,9 @@ def plot_cdf(*data,
              xlabel: str = None,
              padding: float = 0.2,
              block: bool = True,
-             legend_loc: str = 'best'):
+             legend_loc: str = 'best',
+             font_family: str = None,
+             ):
     """
     Usage examples:
 
@@ -142,6 +150,7 @@ def plot_cdf(*data,
       plot_cdf( ([0, 1, 2, 3, 4], [2, 4, 8, 6, 0]) )
 
 
+    :param font_family:
     :param data: List(s) of integers
     :param titles: Title(s) of each subfigure
     :param maxcol: Maximum number of subfigures in the same row
@@ -175,7 +184,9 @@ def plot_cdf(*data,
            ylim=[0,1],
            padding=padding,
            block=block,
-           legend_loc=legend_loc)
+           legend_loc=legend_loc,
+           font_family=font_family,
+           )
 
 
 def plot_linear(*data,
@@ -187,7 +198,9 @@ def plot_linear(*data,
                 ylim: List = None,
                 padding: float = 0.2,
                 block: bool = True,
-                legend_loc: str = 'best'):
+                legend_loc: str = 'best',
+                font_family: str = None,
+                ):
     """
     Usage examples:
 
@@ -208,6 +221,7 @@ def plot_linear(*data,
       plot_cdf( ([0, 1, 2, 3, 4], [2, 4, 8, 6, 0]) )
 
 
+    :param font_family:
     :param data: List(s) of integers
     :param titles: Title(s) of each subfigure
     :param maxcol: Maximum number of subfigures in the same row
@@ -240,4 +254,6 @@ def plot_linear(*data,
            ylim=ylim,
            padding=padding,
            block=block,
-           legend_loc=legend_loc)
+           legend_loc=legend_loc,
+           font_family=font_family,
+           )

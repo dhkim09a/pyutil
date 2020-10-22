@@ -23,10 +23,7 @@ class Subcommand:
         self.parser = subparsers.add_parser(self.name, help=_help)
         self.parser.set_defaults(func=self.on_command)
         self.on_parser_init(self.parser)
-        if subparsers.metavar:
-            subparsers.metavar = subparsers.metavar + ', ' + self.name
-        else:
-            subparsers.metavar = self.name
+        subparsers.metavar = 'command'
 
     def __init__(self, subparsers = None, name: str = None, help: str = '', dependency: Union[str, List[str]] = ''):
         self.name = name if name else type(self).__name__.lower()
