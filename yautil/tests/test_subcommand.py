@@ -22,7 +22,7 @@ class TestSubcommand(TestCase):
 
         cmd = 'cmda'
         args = parser.parse_args([cmd])
-        parser.exec_subcommands()
+        parser.exec_subcommands(args)
 
     def test_subcommand_naming(self):
         cmd = ''
@@ -40,7 +40,7 @@ class TestSubcommand(TestCase):
 
         cmd = 'X'
         args = parser.parse_args([cmd])
-        parser.exec_subcommands()
+        parser.exec_subcommands(args)
 
     def test_multiple_subcommand_regs(self):
         cmd = ''
@@ -73,15 +73,15 @@ class TestSubcommand(TestCase):
 
         cmd = 'cmda'
         argsA = parser.parse_args([cmd])
-        parser.exec_subcommands()
+        parser.exec_subcommands(argsA)
 
         cmd = 'cmdb'
         argsB = parser.parse_args([cmd])
-        parser.exec_subcommands()
+        parser.exec_subcommands(argsB)
 
         cmd = 'cmdc'
         argsC = parser.parse_args([cmd])
-        parser.exec_subcommands()
+        parser.exec_subcommands(argsC)
 
         cmd = 'cmda'
         parser.exec_subcommands(argsA)
@@ -102,7 +102,7 @@ class TestSubcommand(TestCase):
 
         cmd = 'cmda'
         args = parser.parse_args([cmd])
-        parser.exec_subcommands()
+        parser.exec_subcommands(args)
 
     def test_help(self):
         cmd = ''
@@ -124,3 +124,27 @@ class TestSubcommand(TestCase):
             args = parser.parse_args([cmd])
         except:
             pass
+
+    def test_shared_argument(self):
+        cmd = ''
+
+        class CmdA(Subcommand):
+            def on_parser_init(self, parser: argparse.ArgumentParser):
+                pass
+
+            def on_command(self, args):
+                assert cmd == 'cmda'
+
+        parser = SubcommandParser()
+
+        parser.add_argument('-x', action='store_true', shared=True)
+
+        parser.add_subcommands(CmdA())
+
+        # parser.add_argument('-y', action='store_true', shared=True)
+
+        cmd = 'cmda'
+        # args = parser.parse_args([cmd, '-x', '-y'])
+        args = parser.parse_args([cmd, '-x'])
+        parser.exec_subcommands(args)
+

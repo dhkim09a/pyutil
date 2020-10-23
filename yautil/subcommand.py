@@ -1,7 +1,7 @@
 # PYTHON_ARGCOMPLETE_OK
 
 import argparse
-from typing import Union, List
+from typing import Union, List, Text, Type, Any, Callable, Iterable, Optional, Tuple
 
 try:
     import argcomplete
@@ -19,8 +19,12 @@ class Subcommand:
     def on_command(self, args):
         raise NotImplementedError
 
-    def _register(self, subparsers, _help=None):
-        self.parser = subparsers.add_parser(self.name, help=_help)
+    def _register(self, subparsers, _help=None, parent: argparse.ArgumentParser = None):
+        kwargs = {'help': _help}
+        if parent:
+            kwargs['parents'] = [parent]
+
+        self.parser = subparsers.add_parser(self.name, **kwargs)
         self.parser.set_defaults(func=self.on_command)
         self.on_parser_init(self.parser)
         subparsers.metavar = 'command'
@@ -33,7 +37,7 @@ class Subcommand:
 
 class SubcommandParser(argparse.ArgumentParser):
     subparsers = None
-    args = None
+    shared_parser = None
 
     argcomplete: bool
 
@@ -50,7 +54,8 @@ class SubcommandParser(argparse.ArgumentParser):
 
         for subcommand in subcommands:
             if isinstance(subcommand, Subcommand):
-                subcommand._register(self.subparsers)
+                subcommand._register(self.subparsers,
+                                     parent=self.shared_parser)
 
     def parse_args(self, *args, **kwargs) -> object:
         if self.argcomplete:
@@ -58,13 +63,19 @@ class SubcommandParser(argparse.ArgumentParser):
                 argcomplete.autocomplete(self)
             else:
                 print('warning: install \'argcomplete\' package to enable bash autocomplete')
-        self.args = super().parse_args(*args, **kwargs)
-        return self.args
+        return super().parse_args(*args, **kwargs)
 
     def exec_subcommands(self, parsed_args: object = None):
-        if not parsed_args:
-            parsed_args = self.args
         if not parsed_args:
             parsed_args = self.parse_args()
 
         parsed_args.func(parsed_args)
+
+    def add_argument(self, *args, shared: bool = False, **kwargs):
+        if shared:
+            if not self.shared_parser:
+                self.shared_parser = argparse.ArgumentParser(add_help=False)
+
+            return self.shared_parser.add_argument(*args, **kwargs)
+
+        return super().add_argument(*args, **kwargs)
