@@ -80,6 +80,9 @@ def __plot(*data,
             else:
                 line_label = None
 
+            if not line_data:
+                continue
+
             assert isinstance(line_data[0], tuple)
 
             x, y = map(list, zip(*line_data))
