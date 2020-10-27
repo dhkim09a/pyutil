@@ -148,3 +148,27 @@ class TestSubcommand(TestCase):
         args = parser.parse_args([cmd, '-x'])
         parser.exec_subcommands(args)
 
+    def test_subsubcommand(self):
+        cmd = ''
+
+        class SubSubCmd(Subcommand):
+            def on_parser_init(self, parser: SubcommandParser):
+                parser.add_argument('x', type=str)
+
+            def on_command(self, args):
+                assert args.x == 'arg'
+
+        class SubCmd(Subcommand):
+            def on_parser_init(self, parser: SubcommandParser):
+                parser.add_subcommands(SubSubCmd())
+
+            def on_command(self, args):
+                pass
+
+        parser = SubcommandParser()
+
+        parser.add_subcommands(SubCmd())
+
+        cmd = 'subcmd subsubcmd arg'.split()
+        args = parser.parse_args(*[cmd])
+        parser.exec_subcommands(args)
