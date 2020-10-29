@@ -51,3 +51,10 @@ class TestPlotLinear(TestPlot):
     def __init__(self, *args, **kwargs):
         self.plot = yautil.plot_linear
         super().__init__(*args, **kwargs)
+
+
+class TestPlotScatter(TestPlot):
+
+    def __init__(self, *args, **kwargs):
+        self.plot = yautil.plot_scatter
+        super().__init__(*args, **kwargs)
