@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 class TestPlot(TestCase):
     plot: callable
+    pause = .001
 
     @classmethod
     def setUpClass(cls):
@@ -16,26 +17,26 @@ class TestPlot(TestCase):
     def test_basic(self):
         data = [0, 1, 2, 2, 3, 4]
         self.plot(data, block=False)
-        plt.pause(.001)
+        plt.pause(self.pause)
         plt.close()
 
     def test_xlabel(self):
         data = ['test values', 0, 1, 2, 2, 3, 4]
         self.plot(data, block=False)
-        plt.pause(.001)
+        plt.pause(self.pause)
         plt.close()
 
     def test_subfigures(self):
         data = [0, 1, 2, 2, 3, 4]
         self.plot(data, data, block=False)
-        plt.pause(.001)
+        plt.pause(self.pause)
         plt.close()
 
     def test_multi_lines(self):
         data1 = ['test values 1', 0, 1, 2, 2, 3, 4]
         data2 = ['test values 2', 1, 2, 2, 3, 4]
         self.plot((data1, data2), block=False)
-        plt.pause(.001)
+        plt.pause(self.pause)
         plt.close()
 
 
@@ -57,4 +58,11 @@ class TestPlotScatter(TestPlot):
 
     def __init__(self, *args, **kwargs):
         self.plot = yautil.plot_scatter
+        super().__init__(*args, **kwargs)
+
+
+class TestPlotBox(TestPlot):
+
+    def __init__(self, *args, **kwargs):
+        self.plot = yautil.plot_box
         super().__init__(*args, **kwargs)

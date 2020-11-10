@@ -80,7 +80,7 @@ def _func_wrapper(self_id, ret: list, arglist: List[Tuple]):
         signal.signal(signal.SIGALRM, _sighandler)
 
     for argset in arglist:
-        func, args, kwargs = argset
+        jid, func, args, kwargs = argset
         # print('wrapper: self_id: ' + str(self_id) + ', func: ' + str(func) + ', args: ' + str(args) + ', kwargs: ' + str(kwargs))
         if self.task_timeout > 0:
             signal.alarm(self.task_timeout)
@@ -98,7 +98,7 @@ def _func_wrapper(self_id, ret: list, arglist: List[Tuple]):
 
         if result is not None:
             try:
-                ret.append(result)
+                ret.append((jid, result))
             except Exception as e:
                 print('MpUtil error: can\'t handle results from ' + str(func) + '(' + str(args) + ', ' + str(kwargs) + '). ' + str(e))
         count += 1
@@ -118,30 +118,36 @@ class MpUtil:
     maxchunksize: int
     task_timeout: int
     arg0: object
+    ordered: bool
+    jid: int
 
     def __init__(self, processes: int = 0, maxchunksize: int = 1, total: int = 0, desc: str = "", task_timeout=0,
-                 arg0: object = None):
+                 arg0: object = None, ordered: bool = False):
         if processes == 0:
             processes = mp.cpu_count()
 
-        self.ctx = mp.Manager()
-        self.free = mp.Value('i', processes)
-        self.free_cond = mp.Condition(self.free.get_lock())
-
         self.queue = []
-        self.results = self.ctx.list([])
         self.pbar = tqdm(total=total, desc=desc)
-
-        self.buffer = self.ctx.list()
-        for _ in range(processes + 1):
-            self.buffer.append(self.ctx.list())
 
         self.maxchunksize = maxchunksize
         self.task_timeout = task_timeout
         self.arg0 = arg0
 
+        self.ordered = ordered
+        self.jid = 0
+
         self.id = id(self)
         _obj_idmap[self.id] = self
+
+        self.ctx = mp.Manager()
+        self.free = mp.Value('i', processes)
+        self.free_cond = mp.Condition(self.free.get_lock())
+
+        self.results = self.ctx.list([])
+
+        self.buffer = self.ctx.list()
+        for _ in range(processes + 1):
+            self.buffer.append(self.ctx.list())
 
         self.pool = mp.Pool(processes=processes)
 
@@ -162,7 +168,8 @@ class MpUtil:
 
     def schedule(self, func: callable, *args, **kwargs):
         with self.free.get_lock():
-            self.queue.append((func, args, kwargs))
+            self.queue.append((self.jid, func, args, kwargs))
+            self.jid += 1
 
             if self.free.value > 0:
                 self.flush()
@@ -181,4 +188,13 @@ class MpUtil:
         self.pool.join()
         self.pbar.close()
         mp.log_to_stderr()
-        return self.results
+
+        if not self.results:
+            return
+
+        if self.ordered:
+            self.results = sorted(self.results, key=lambda e: e[0])
+
+        jids, results = zip(*self.results)
+
+        return list(results)

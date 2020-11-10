@@ -1,4 +1,32 @@
-from typing import Union, List
+from enum import Enum, auto
+from typing import Union, List, Tuple
+
+
+class __PlotMode(Enum):
+    LINEAR = auto()
+    SCATTER = auto()
+    BOX = auto()
+
+
+def __unzip_subplot_data(subplot_data: Tuple) -> (list, list):
+    labels = []
+    lines = []
+    for line_data in subplot_data:
+        assert isinstance(line_data, list)
+
+        if line_data and isinstance(line_data[0], str):
+            line_label = line_data[0]
+            line_data = line_data[1:]
+        else:
+            line_label = None
+
+        if not line_data:
+            continue
+
+        labels.append(line_label)
+        lines.append(line_data)
+
+    return labels, lines
 
 
 def __plot(*data,
@@ -13,7 +41,7 @@ def __plot(*data,
            legend_loc: str = 'best',
            font_family: str = None,
            # the below are private params
-           scatter: bool = False
+           mode: __PlotMode = __PlotMode.LINEAR
            ):
     """
     Usage examples:
@@ -73,28 +101,22 @@ def __plot(*data,
             subplot.set_ylim(ylim)
         plt.subplots_adjust(left=padding, right=1 - padding, top=1 - padding, bottom=padding)
 
-        for line_data in subplot_data:
-            assert isinstance(line_data, list)
+        labels, lines = __unzip_subplot_data(subplot_data)
 
-            if line_data and isinstance(line_data[0], str):
-                line_label = line_data[0]
-                line_data = line_data[1:]
-            else:
-                line_label = None
+        if mode == __PlotMode.SCATTER or mode == __PlotMode.LINEAR:
+            for label, line in zip(labels, lines):
+                assert isinstance(line[0], tuple)
 
-            if not line_data:
-                continue
+                x, y = map(list, zip(*line))
 
-            assert isinstance(line_data[0], tuple)
+                args, kwargs = (lambda *a, **ka: (a, ka))(x, y, label=label)
 
-            x, y = map(list, zip(*line_data))
-
-            args, kwargs = (lambda *a, **ka: (a, ka))(x, y, label=line_label)
-
-            if scatter:
-                subplot.scatter(*args, **kwargs)
-            else:
-                subplot.plot(*args, **kwargs)
+                if mode == __PlotMode.SCATTER:
+                    subplot.scatter(*args, **kwargs)
+                elif mode == __PlotMode.LINEAR:
+                    subplot.plot(*args, **kwargs)
+        elif mode == __PlotMode.BOX:
+            subplot.boxplot(lines, labels=labels)
     plt.legend(loc=legend_loc)
     plt.show(block=block)
 
@@ -336,5 +358,30 @@ def plot_scatter(*data,
            block=block,
            legend_loc=legend_loc,
            font_family=font_family,
-           scatter=True,
+           mode=__PlotMode.SCATTER,
+           )
+
+
+def plot_box(*data,
+             titles: Union[str, List[str]] = None,
+             maxcol: int = 4,
+             xlabel: str = None,
+             ylabel: str = None,
+             ylim: List = None,
+             padding: float = 0.2,
+             block: bool = True,
+             legend_loc: str = 'best',
+             font_family: str = None,
+             ):
+    __plot(*data,
+           titles=titles,
+           maxcol=maxcol,
+           xlabel=xlabel,
+           ylabel=ylabel,
+           ylim=ylim,
+           padding=padding,
+           block=block,
+           legend_loc=legend_loc,
+           font_family=font_family,
+           mode=__PlotMode.BOX,
            )

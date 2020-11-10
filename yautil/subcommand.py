@@ -32,7 +32,7 @@ class SubcommandParser(argparse.ArgumentParser):
             subcommand._register(self.subparsers,
                                  parent=self.shared_parser)
 
-    def parse_args(self, *args, **kwargs) -> object:
+    def parse_args(self, *args, **kwargs) -> any:
         if self.argcomplete:
             if 'argcomplete' in globals():
                 argcomplete.autocomplete(self)
