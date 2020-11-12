@@ -40,8 +40,10 @@ def __plot(*data,
            block: bool = True,
            legend_loc: str = 'best',
            font_family: str = None,
+           autofmt_xdate: bool = True,
            # the below are private params
-           mode: __PlotMode = __PlotMode.LINEAR
+           mode: __PlotMode = __PlotMode.LINEAR,
+           **subplot_kwargs
            ):
     """
     Usage examples:
@@ -109,15 +111,17 @@ def __plot(*data,
 
                 x, y = map(list, zip(*line))
 
-                args, kwargs = (lambda *a, **ka: (a, ka))(x, y, label=label)
+                args, kwargs = (lambda *a, **ka: (a, ka))(x, y, label=label, **subplot_kwargs)
 
                 if mode == __PlotMode.SCATTER:
                     subplot.scatter(*args, **kwargs)
                 elif mode == __PlotMode.LINEAR:
                     subplot.plot(*args, **kwargs)
         elif mode == __PlotMode.BOX:
-            subplot.boxplot(lines, labels=labels)
+            subplot.boxplot(lines, labels=labels, **subplot_kwargs)
     plt.legend(loc=legend_loc)
+    if autofmt_xdate:
+        fig.autofmt_xdate()
     plt.show(block=block)
 
 
@@ -161,6 +165,7 @@ def plot_cdf(*data,
              block: bool = True,
              legend_loc: str = 'best',
              font_family: str = None,
+             **subplot_kwargs
              ):
     """
     Usage examples:
@@ -218,6 +223,7 @@ def plot_cdf(*data,
            block=block,
            legend_loc=legend_loc,
            font_family=font_family,
+           **subplot_kwargs
            )
 
 
@@ -232,6 +238,7 @@ def plot_linear(*data,
                 block: bool = True,
                 legend_loc: str = 'best',
                 font_family: str = None,
+                **subplot_kwargs
                 ):
     """
     Usage examples:
@@ -288,6 +295,7 @@ def plot_linear(*data,
            block=block,
            legend_loc=legend_loc,
            font_family=font_family,
+           **subplot_kwargs
            )
 
 
@@ -302,6 +310,7 @@ def plot_scatter(*data,
                  block: bool = True,
                  legend_loc: str = 'best',
                  font_family: str = None,
+                 **subplot_kwargs
                  ):
     """
     Usage examples:
@@ -359,6 +368,7 @@ def plot_scatter(*data,
            legend_loc=legend_loc,
            font_family=font_family,
            mode=__PlotMode.SCATTER,
+           **subplot_kwargs
            )
 
 
@@ -372,6 +382,7 @@ def plot_box(*data,
              block: bool = True,
              legend_loc: str = 'best',
              font_family: str = None,
+             **subplot_kwargs
              ):
     __plot(*data,
            titles=titles,
@@ -384,4 +395,5 @@ def plot_box(*data,
            legend_loc=legend_loc,
            font_family=font_family,
            mode=__PlotMode.BOX,
+           **subplot_kwargs
            )
