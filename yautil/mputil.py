@@ -65,7 +65,8 @@ def _on_done(result):
         while ret:
             ret.pop()
         self.buffer.append(ret)
-        self.pbar.update(count)
+        if self.pbar:
+            self.pbar.update(count)
 
         self.free.value += 1
         self.free_cond.notify()
@@ -120,9 +121,14 @@ class MpUtil:
     arg0: object
 
     def __init__(self, processes: int = 0, maxchunksize: int = 1, total: int = 0, desc: str = "", task_timeout=0,
-                 arg0: object = None):
+                 arg0: object = None, pbar: bool = True):
         if processes == 0:
             processes = mp.cpu_count()
+
+        if 'fork' in mp.get_all_start_methods():
+            mp.set_start_method('fork')
+        else:
+            raise OSError('\'fork\' starting method is required from the multiprocessing module')
 
         self.ctx = mp.Manager()
         self.free = mp.Value('i', processes)
@@ -130,7 +136,7 @@ class MpUtil:
 
         self.queue = []
         self.results = self.ctx.list([])
-        self.pbar = tqdm(total=total, desc=desc)
+        self.pbar = tqdm(total=total, desc=desc) if pbar else None
 
         self.buffer = self.ctx.list()
         for _ in range(processes + 1):
@@ -152,7 +158,7 @@ class MpUtil:
         pass
 
     def __del__(self):
-        _obj_idmap.pop(id(self))
+        _obj_idmap.pop(self.id)
 
     def flush(self):
         ret: list = self.buffer.pop()
@@ -179,6 +185,7 @@ class MpUtil:
         self.flush()
         self.pool.close()
         self.pool.join()
-        self.pbar.close()
+        if self.pbar:
+            self.pbar.close()
         mp.log_to_stderr()
         return self.results

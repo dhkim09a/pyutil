@@ -21,6 +21,7 @@ setuptools.setup(
     install_requires=[
         'tqdm',
         'sh',
+        'matplotlib'
     ],
     test_suite='nose.collector',
     test_require=['nose'],
