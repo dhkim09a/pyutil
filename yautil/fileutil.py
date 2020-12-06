@@ -54,7 +54,7 @@ def find_recursive_unix(root: str, name_patterns: list =None, ignored_dirs=None,
     else:
         find_cmd += find_filter
     bout = subprocess.check_output(find_cmd, shell=True)
-    out = bout.decode('ascii').splitlines()
+    out = bout.decode('utf-8').splitlines()
     if sort:
         out.sort()
     return out
