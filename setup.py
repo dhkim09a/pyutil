@@ -1,11 +1,18 @@
 import setuptools
 
+
+deps = [
+    'tqdm',
+    'sh',
+    'matplotlib',
+]
+
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="yautil", # Replace with your own username
-    version="0.0.15",
+    version="0.0.16",
     author="Donghwi Kim",
     author_email="dhkim09@kaist.ac.kr",
     description="Yet Another Python util.",
@@ -18,12 +25,9 @@ setuptools.setup(
     #     "License :: OSI Approved :: MIT License",
     #     "Operating System :: OS Independent",
     # ],
-    install_requires=[
-        'tqdm',
-        'sh',
-        'matplotlib'
-    ],
-    test_suite='nose.collector',
-    test_require=['nose'],
-    python_requires='>=3.8',
+    install_requires=deps,
+    extras_require={
+        'test': deps,
+    },
+    python_requires='>=3.7',
 )
