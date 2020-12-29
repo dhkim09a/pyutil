@@ -30,3 +30,7 @@ class TestMpUtil(TestCase):
     #
     #     for i, y in enumerate([0, 2, 4, 6, 8, 10]):
     #         assert y == results[i]
+
+    def test_call_twice(self):
+        self.test_basic()
+        self.test_basic()

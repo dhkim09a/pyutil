@@ -108,6 +108,7 @@ def _func_wrapper(self_id, ret: list, arglist: List[Tuple]):
 
 
 class MpUtil:
+    mpctx: mp
     ctx: mp.Manager
     pool: mp.Pool
     pbar: tqdm
@@ -126,13 +127,13 @@ class MpUtil:
             processes = mp.cpu_count()
 
         if 'fork' in mp.get_all_start_methods():
-            mp.set_start_method('fork')
+            self.mpctx = mp.get_context('fork')
         else:
             raise OSError('\'fork\' starting method is required from the multiprocessing module')
 
-        self.ctx = mp.Manager()
-        self.free = mp.Value('i', processes)
-        self.free_cond = mp.Condition(self.free.get_lock())
+        self.ctx = self.mpctx.Manager()
+        self.free = self.mpctx.Value('i', processes)
+        self.free_cond = self.mpctx.Condition(self.free.get_lock())
 
         self.queue = []
         self.results = self.ctx.list([])
@@ -149,7 +150,7 @@ class MpUtil:
         self.id = id(self)
         _obj_idmap[self.id] = self
 
-        self.pool = mp.Pool(processes=processes)
+        self.pool = self.mpctx.Pool(processes=processes)
 
     def __enter__(self):
         return self
@@ -187,5 +188,5 @@ class MpUtil:
         self.pool.join()
         if self.pbar:
             self.pbar.close()
-        mp.log_to_stderr()
+        self.mpctx.log_to_stderr()
         return self.results
