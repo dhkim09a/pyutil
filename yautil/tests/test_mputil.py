@@ -7,6 +7,23 @@ def double(x: int) -> int:
     return x * 2
 
 
+class Object:
+    i: int
+    s: str
+    d: dict
+    l: list
+
+
+def new_obj() -> Object:
+    o = Object()
+    o.i = 0
+    o.s = 'object'
+    o.d = {'a': 1, 'b': 2}
+    o.l = ['c', 'd']
+
+    return o
+
+
 class TestMpUtil(TestCase):
 
     def test_basic(self):
@@ -34,3 +51,20 @@ class TestMpUtil(TestCase):
     def test_call_twice(self):
         self.test_basic()
         self.test_basic()
+
+    def test_obj_ret(self):
+        total = 10
+        with MpUtil(total=total, pbar=False) as mp:
+            for i in range(total):
+                mp.schedule(new_obj)
+            results = mp.wait()
+        assert len(results) == total
+        for o in results:
+            assert isinstance(o, Object)
+            assert o.i == 0
+            assert o.s == 'object'
+            assert o.d['a'] == 1
+            assert o.d['b'] == 2
+            assert len(o.l) == 2
+            assert o.l[0] == 'c'
+            assert o.l[1] == 'd'
