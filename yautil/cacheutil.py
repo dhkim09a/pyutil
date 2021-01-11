@@ -73,7 +73,7 @@ class PersistentCache:
     keys: set
 
     def __locate_value(self, key: Key) -> str:
-        return os.path.join(self.cache_dir, key.hexdigest)
+        return os.path.join(self.cache_dir, '__cache_entry_' + key.hexdigest)
 
     def __init__(self, cache_dir=DEFAULT_CACHE_DIR):
         self.cache_dir = cache_dir
@@ -82,7 +82,8 @@ class PersistentCache:
         if not os.path.isdir(cache_dir):
             raise NotADirectoryError(cache_dir)
 
-        for path in os.listdir(self.cache_dir):
+        for file in os.listdir(self.cache_dir):
+            path = os.path.join(self.cache_dir, file)
             if not os.path.isfile(path):
                 continue
 
