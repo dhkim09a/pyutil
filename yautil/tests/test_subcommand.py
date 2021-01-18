@@ -1,4 +1,5 @@
 import argparse
+import sys
 from unittest import TestCase
 
 from yautil import Subcommand, SubcommandParser
@@ -172,3 +173,50 @@ class TestSubcommand(TestCase):
         cmd = 'subcmd subsubcmd arg'.split()
         args = parser.parse_args(*[cmd])
         parser.exec_subcommands(args)
+
+    def test_unknown_args(self):
+        class SubCmdA(Subcommand):
+            def on_parser_init(self, parser: SubcommandParser):
+                parser.add_argument('foo')
+
+            def on_command(self, args):
+                assert args.foo == 'foo1'
+
+        class SubCmdB(Subcommand):
+            def on_parser_init(self, parser: SubcommandParser):
+                parser.allow_unknown_args = True
+                parser.add_argument('foo')
+
+            def on_command(self, args, unknown_args=None):
+                assert args.foo == 'foo1'
+                assert isinstance(unknown_args, list)
+                assert len(unknown_args) == 2
+                assert unknown_args[0] == 'unknown'
+                assert unknown_args[1] == 'args'
+
+        parser = SubcommandParser()
+        # parser.allow_unknown_args = True
+
+        parser.add_subcommands(SubCmdA())
+        parser.add_subcommands(SubCmdB())
+
+        argv = sys.argv.copy()
+
+        sys.argv[1:] = ['subcmda', 'foo1']
+
+        parser.exec_subcommands()
+
+        sys.argv[1:] = ['subcmda', 'foo1', 'unknown', 'args']
+
+        try:
+            parser.exec_subcommands()
+        except:
+            pass
+        else:
+            raise Exception('did not raise exception for unknown args')
+
+        sys.argv[1:] = ['subcmdb', 'foo1', 'unknown', 'args']
+
+        parser.exec_subcommands()
+
+        sys.argv = argv
