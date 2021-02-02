@@ -33,6 +33,7 @@ def highlight_str(string: str, start: int, end: int):
 
     return hl_str
 
+
 def auto_print(string: str):
     if os.fstat(0) == os.fstat(1):
         print(string)

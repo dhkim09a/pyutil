@@ -1,8 +1,10 @@
 # PYTHON_ARGCOMPLETE_OK
 
 import argparse
-from typing import Union, List, Text, Type, Any, Callable, Iterable, Optional, Tuple
+from typing import Union, List
 from gettext import gettext as _
+
+from .pyshutil import compile_shargs
 
 try:
     import argcomplete
@@ -33,10 +35,14 @@ class SubcommandParser(argparse.ArgumentParser):
         self.argcomplete = argcomplete
         self.allow_unknown_args = False
 
-    def add_subcommands(self, *subcommands):
+    def add_subcommands(self, *subcommands, title='subcommands', required=True, help=None, metavar=None):
         if not self.subparsers:
-            self.subparsers = self.add_subparsers()
-            self.subparsers.required = True
+            self.subparsers = self.add_subparsers(
+                title=title,
+                required=required,
+                help=help,
+                metavar=metavar,
+            )
             self.subparsers.dest = 'subcommand'
 
         for subcommand in subcommands:
@@ -108,3 +114,13 @@ class Subcommand:
         self.name = name if name else type(self).__name__.lower()
         if subparsers:
             self._register(subparsers, _help=help)
+
+    @classmethod
+    def exec(cls, *args, **kwargs):
+        cmdargs, shargs = compile_shargs(*args, **kwargs)
+
+        parser = SubcommandParser()
+        parser.add_subcommands(cls(name='subcmd'))
+        parserd_args = parser.parse_args(['subcmd', *cmdargs])
+
+        parser.exec_subcommands(parserd_args)
