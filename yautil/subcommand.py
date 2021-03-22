@@ -89,6 +89,7 @@ class SubcommandParser(argparse.ArgumentParser):
 class Subcommand:
     parser: SubcommandParser
     name: str
+    help: str
 
     def on_parser_init(self, parser: SubcommandParser):
         raise NotImplementedError
@@ -96,8 +97,8 @@ class Subcommand:
     def on_command(self, args, unknown_args=None):
         raise NotImplementedError
 
-    def _register(self, subparsers, _help=None, parent: argparse.ArgumentParser = None):
-        kwargs = {'help': _help}
+    def _register(self, subparsers, parent: argparse.ArgumentParser = None):
+        kwargs = {'help': self.help}
         if parent:
             kwargs['parents'] = [parent]
 
@@ -112,8 +113,9 @@ class Subcommand:
 
     def __init__(self, subparsers = None, name: str = None, help: str = '', dependency: Union[str, List[str]] = ''):
         self.name = name if name else type(self).__name__.lower()
+        self.help = help
         if subparsers:
-            self._register(subparsers, _help=help)
+            self._register(subparsers)
 
     @classmethod
     def exec(cls, *args, **kwargs):
