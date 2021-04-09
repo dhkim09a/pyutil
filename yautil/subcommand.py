@@ -4,6 +4,7 @@ import argparse
 from typing import Union, List
 from gettext import gettext as _
 
+from . import DummyModule
 from .pyshutil import compile_shargs
 
 try:
@@ -52,7 +53,7 @@ class SubcommandParser(argparse.ArgumentParser):
                                  parent=self.shared_parser)
 
     def try_argcomplete(self):
-        if 'argcomplete' in globals():
+        if 'argcomplete' in globals() and not isinstance(argcomplete, DummyModule):
             argcomplete.autocomplete(self)
         else:
             print('warning: install \'argcomplete\' package to enable bash autocomplete')
