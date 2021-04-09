@@ -18,5 +18,5 @@ class TestDocker(TestCase):
         dockerfile = _p.join(self.tmpdir.name, 'Dockerfile')
         with open(dockerfile, 'w+') as f:
             f.write('FROM ubuntu')
-        sout = str(dsh(dockerfile, 'echo -n hello'))
+        sout = str(dsh('echo', '-n', 'hello', _build_context=self.tmpdir.name))
         assert sout == 'hello'

@@ -2,9 +2,7 @@ import setuptools
 
 
 deps = [
-    'tqdm',
     'sh',
-    'matplotlib',
 ]
 
 with open("README.md", "r") as fh:
@@ -12,7 +10,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="yautil", # Replace with your own username
-    version="0.0.28",
+    version="0.0.30",
     author="Donghwi Kim",
     author_email="dhkim09@kaist.ac.kr",
     description="Yet Another Python util.",

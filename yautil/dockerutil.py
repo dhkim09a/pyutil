@@ -9,13 +9,14 @@ import sh
 from .pyshutil import compile_shargs
 
 
-def __build(dockerfile, fg=False):
+def __build(build_context, fg=False):
     tmpdir = tempfile.TemporaryDirectory()
 
-    shutil.copyfile(dockerfile, _p.join(tmpdir.name, 'Dockerfile'))
-
     iidfile = _p.join(tmpdir.name, '__iid')
-    sh.docker.build(tmpdir.name, iidfile=iidfile, _fg=fg)
+    try:
+        sh.docker.build(build_context, iidfile=iidfile, _fg=fg)
+    except Exception:
+        raise Exception(f'failed to build a docker image with build context at {build_context}')
 
     with open(iidfile, 'r') as f:
         return f.read()
@@ -47,24 +48,29 @@ def __create(image_id: str, commands: str, volumes=None):
         return f.read()
 
 
-def dsh(dockerfile: str,
-        *args,
+def dsh(*args,
         _volumes=None,
         _root=False,
         _auto_remove=True,
         _verbose=False,
         _cwd=None,
+        _build_context=None,
         **kwargs,
         ):
 
+    if (not _build_context) or (not _p.isdir(_build_context)):
+        raise Exception('proper _build_context directory must be supplied')
+
     if not _cwd:
-        _cwd = _p.realpath(_p.curdir)
+        _cwd = _p.curdir
+
+    _cwd = _p.realpath(_cwd)
 
     commands, shkwargs = compile_shargs(*args, **kwargs)
 
     commands = ' '.join(commands)
 
-    image_id = __build(dockerfile, fg=_verbose)
+    image_id = __build(_build_context, fg=_verbose)
     if not image_id:
         raise Exception('failed to build image')
 
