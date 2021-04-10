@@ -5,6 +5,12 @@
 import builtins
 from types import ModuleType
 
+# argcomplete does not work when import errors are ignored.
+try:
+    import argcomplete
+except ImportError:
+    pass
+
 
 class DummyModule(ModuleType):
     def __getattr__(self, key):
