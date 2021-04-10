@@ -1,6 +1,5 @@
 import getpass
 import os
-import shutil
 import tempfile
 from os import path as _p
 
@@ -70,6 +69,8 @@ def dsh(*args,
 
     commands = ' '.join(commands)
 
+    if _verbose:
+        print('Building a docker image...')
     image_id = __build(_build_context, fg=_verbose)
     if not image_id:
         raise Exception('failed to build image')
@@ -88,18 +89,22 @@ def dsh(*args,
             f'groupadd -g {gid} {username}; '
             f'useradd -l -u {uid} -g $(getent group {gid} | cut -d: -f1) {username} && '
             f'install -d -m 0755 -o {username} -g $(getent group {gid} | cut -d: -f1) {home} && '
-            f'chown -R {uid}:{gid} {home} && '
+            # f'chown -R {uid}:{gid} {home} && '
             f'cd {home} && su {username} -c "/bin/bash -c \\"{commands}\\""'
         )
 
     # print(commands)
 
+    if _verbose:
+        print('Creating a docker container...')
     container_id = __create(image_id, commands, f'{_cwd}:{home}:rw')
     if not container_id:
         raise Exception('failed to create container')
 
     fg = shkwargs['_fg'] if '_fg' in shkwargs else False
 
+    if _verbose:
+        print('Starting the docker container...')
     if fg:
         return sh.docker.start(container_id, i=True, **shkwargs)
     else:
