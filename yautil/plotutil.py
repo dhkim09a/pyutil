@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Dict
 
 
 class __PlotMode(Enum):
@@ -38,11 +38,13 @@ def __plot(*data,
            ylim: List = None,
            padding: float = 0.2,
            block: bool = True,
-           legend_loc: str = 'best',
+           legend_loc: str = None,
            font_family: str = None,
            autofmt_xdate: bool = True,
            # the below are private params
            mode: __PlotMode = __PlotMode.LINEAR,
+           figsize: tuple = None,
+           subplots_adjust: Dict[str, float] = None,
            **subplot_kwargs
            ):
     """
@@ -77,7 +79,7 @@ def __plot(*data,
     if not titles:
         titles = []
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=figsize)
     plt.clf()
     if font_family:
         # 'NanumGothicOTF'
@@ -119,9 +121,16 @@ def __plot(*data,
                     subplot.plot(*args, **kwargs)
         elif mode == __PlotMode.BOX:
             subplot.boxplot(lines, labels=labels, **subplot_kwargs)
-    plt.legend(loc=legend_loc)
+
+    if legend_loc:
+        plt.legend(loc=legend_loc)
+
     if autofmt_xdate:
         fig.autofmt_xdate()
+
+    if subplots_adjust:
+        plt.subplots_adjust(**subplots_adjust)
+
     plt.show(block=block)
 
 
@@ -163,8 +172,10 @@ def plot_cdf(*data,
              xlabel: str = None,
              padding: float = 0.2,
              block: bool = True,
-             legend_loc: str = 'best',
+             legend_loc: str = None,
              font_family: str = None,
+             figsize: tuple = None,
+             subplots_adjust: Dict[str, float] = None,
              **subplot_kwargs
              ):
     """
@@ -223,6 +234,8 @@ def plot_cdf(*data,
            block=block,
            legend_loc=legend_loc,
            font_family=font_family,
+           figsize=figsize,
+           subplots_adjust=subplots_adjust,
            **subplot_kwargs
            )
 
@@ -236,8 +249,10 @@ def plot_linear(*data,
                 ylim: List = None,
                 padding: float = 0.2,
                 block: bool = True,
-                legend_loc: str = 'best',
+                legend_loc: str = None,
                 font_family: str = None,
+                figsize: tuple = None,
+                subplots_adjust: Dict[str, float] = None,
                 **subplot_kwargs
                 ):
     """
@@ -295,6 +310,8 @@ def plot_linear(*data,
            block=block,
            legend_loc=legend_loc,
            font_family=font_family,
+           figsize=figsize,
+           subplots_adjust=subplots_adjust,
            **subplot_kwargs
            )
 
@@ -308,8 +325,10 @@ def plot_scatter(*data,
                  ylim: List = None,
                  padding: float = 0.2,
                  block: bool = True,
-                 legend_loc: str = 'best',
+                 legend_loc: str = None,
                  font_family: str = None,
+                 figsize: tuple = None,
+                 subplots_adjust: Dict[str, float] = None,
                  **subplot_kwargs
                  ):
     """
@@ -368,6 +387,8 @@ def plot_scatter(*data,
            legend_loc=legend_loc,
            font_family=font_family,
            mode=__PlotMode.SCATTER,
+           figsize=figsize,
+           subplots_adjust=subplots_adjust,
            **subplot_kwargs
            )
 
@@ -380,8 +401,10 @@ def plot_box(*data,
              ylim: List = None,
              padding: float = 0.2,
              block: bool = True,
-             legend_loc: str = 'best',
+             legend_loc: str = None,
              font_family: str = None,
+             figsize: tuple = None,
+             subplots_adjust: Dict[str, float] = None,
              **subplot_kwargs
              ):
     __plot(*data,
@@ -395,5 +418,7 @@ def plot_box(*data,
            legend_loc=legend_loc,
            font_family=font_family,
            mode=__PlotMode.BOX,
+           figsize=figsize,
+           subplots_adjust=subplots_adjust,
            **subplot_kwargs
            )
