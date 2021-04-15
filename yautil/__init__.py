@@ -37,5 +37,6 @@ from .strutil import decomment_cxx, strcompare
 from .plotutil import plot_cdf, plot_linear, plot_scatter, plot_box
 from .cacheutil import PersistentCache
 from .dockerutil import dsh
+from .gitutil import git_expand
 
 builtins.__import__ = realimport

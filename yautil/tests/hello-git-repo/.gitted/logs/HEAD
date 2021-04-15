@@ -1,0 +1,24 @@
+0000000000000000000000000000000000000000 60c0ffa342af353c3788ced2a8216bceb4590784 Donghwi Kim <dhkim09a@gmail.com> 1618465528 +0900	commit (initial): Initial commit
+60c0ffa342af353c3788ced2a8216bceb4590784 60c0ffa342af353c3788ced2a8216bceb4590784 Donghwi Kim <dhkim09a@gmail.com> 1618465537 +0900	checkout: moving from master to A
+60c0ffa342af353c3788ced2a8216bceb4590784 60c0ffa342af353c3788ced2a8216bceb4590784 Donghwi Kim <dhkim09a@gmail.com> 1618465554 +0900	checkout: moving from A to master
+60c0ffa342af353c3788ced2a8216bceb4590784 60c0ffa342af353c3788ced2a8216bceb4590784 Donghwi Kim <dhkim09a@gmail.com> 1618465570 +0900	checkout: moving from master to branch-A
+60c0ffa342af353c3788ced2a8216bceb4590784 dcf8d1b61eb9b15b56ff0b35e5932f7b50f13433 Donghwi Kim <dhkim09a@gmail.com> 1618465578 +0900	commit: Add A
+dcf8d1b61eb9b15b56ff0b35e5932f7b50f13433 60c0ffa342af353c3788ced2a8216bceb4590784 Donghwi Kim <dhkim09a@gmail.com> 1618465588 +0900	checkout: moving from branch-A to master
+60c0ffa342af353c3788ced2a8216bceb4590784 60c0ffa342af353c3788ced2a8216bceb4590784 Donghwi Kim <dhkim09a@gmail.com> 1618465608 +0900	checkout: moving from master to branch-B
+60c0ffa342af353c3788ced2a8216bceb4590784 97c4f0b5816bc4ce4738eb43367f0acb553facd9 Donghwi Kim <dhkim09a@gmail.com> 1618465638 +0900	commit: Add B
+97c4f0b5816bc4ce4738eb43367f0acb553facd9 60c0ffa342af353c3788ced2a8216bceb4590784 Donghwi Kim <dhkim09a@gmail.com> 1618465651 +0900	checkout: moving from branch-B to master
+60c0ffa342af353c3788ced2a8216bceb4590784 60c0ffa342af353c3788ced2a8216bceb4590784 Donghwi Kim <dhkim09a@gmail.com> 1618465673 +0900	checkout: moving from master to branch-C
+60c0ffa342af353c3788ced2a8216bceb4590784 4b0dd7d6460c943f1a22b8c9673f218101ecf691 Donghwi Kim <dhkim09a@gmail.com> 1618465681 +0900	commit: Add C
+4b0dd7d6460c943f1a22b8c9673f218101ecf691 60c0ffa342af353c3788ced2a8216bceb4590784 Donghwi Kim <dhkim09a@gmail.com> 1618465689 +0900	checkout: moving from branch-C to master
+60c0ffa342af353c3788ced2a8216bceb4590784 dcf8d1b61eb9b15b56ff0b35e5932f7b50f13433 KimDonghwi <dhkim@MacBook-Pro-dhkim.local> 1618466138 +0900	checkout: moving from master to branch-A
+60c0ffa342af353c3788ced2a8216bceb4590784 97c4f0b5816bc4ce4738eb43367f0acb553facd9 KimDonghwi <dhkim@MacBook-Pro-dhkim.local> 1618466138 +0900	checkout: moving from master to branch-B
+60c0ffa342af353c3788ced2a8216bceb4590784 4b0dd7d6460c943f1a22b8c9673f218101ecf691 KimDonghwi <dhkim@MacBook-Pro-dhkim.local> 1618466138 +0900	checkout: moving from master to branch-C
+60c0ffa342af353c3788ced2a8216bceb4590784 dcf8d1b61eb9b15b56ff0b35e5932f7b50f13433 KimDonghwi <dhkim@MacBook-Pro-dhkim.local> 1618466140 +0900	checkout: moving from master to branch-A
+60c0ffa342af353c3788ced2a8216bceb4590784 97c4f0b5816bc4ce4738eb43367f0acb553facd9 KimDonghwi <dhkim@MacBook-Pro-dhkim.local> 1618466140 +0900	checkout: moving from master to branch-B
+60c0ffa342af353c3788ced2a8216bceb4590784 4b0dd7d6460c943f1a22b8c9673f218101ecf691 KimDonghwi <dhkim@MacBook-Pro-dhkim.local> 1618466140 +0900	checkout: moving from master to branch-C
+60c0ffa342af353c3788ced2a8216bceb4590784 dcf8d1b61eb9b15b56ff0b35e5932f7b50f13433 KimDonghwi <dhkim@MacBook-Pro-dhkim.local> 1618466753 +0900	checkout: moving from master to branch-A
+60c0ffa342af353c3788ced2a8216bceb4590784 97c4f0b5816bc4ce4738eb43367f0acb553facd9 KimDonghwi <dhkim@MacBook-Pro-dhkim.local> 1618466753 +0900	checkout: moving from master to branch-B
+60c0ffa342af353c3788ced2a8216bceb4590784 4b0dd7d6460c943f1a22b8c9673f218101ecf691 KimDonghwi <dhkim@MacBook-Pro-dhkim.local> 1618466753 +0900	checkout: moving from master to branch-C
+60c0ffa342af353c3788ced2a8216bceb4590784 dcf8d1b61eb9b15b56ff0b35e5932f7b50f13433 KimDonghwi <dhkim@MacBook-Pro-dhkim.local> 1618466756 +0900	checkout: moving from master to branch-A
+60c0ffa342af353c3788ced2a8216bceb4590784 97c4f0b5816bc4ce4738eb43367f0acb553facd9 KimDonghwi <dhkim@MacBook-Pro-dhkim.local> 1618466756 +0900	checkout: moving from master to branch-B
+60c0ffa342af353c3788ced2a8216bceb4590784 4b0dd7d6460c943f1a22b8c9673f218101ecf691 KimDonghwi <dhkim@MacBook-Pro-dhkim.local> 1618466756 +0900	checkout: moving from master to branch-C
