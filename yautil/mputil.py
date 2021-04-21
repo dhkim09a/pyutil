@@ -159,7 +159,8 @@ class MpUtil:
         pass
 
     def __del__(self):
-        _obj_idmap.pop(self.id)
+        if _obj_idmap:
+            _obj_idmap.pop(self.id)
 
     def flush(self):
         ret: list = self.buffer.pop()
