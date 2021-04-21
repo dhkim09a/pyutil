@@ -39,10 +39,10 @@ def __build(build_context, fg=False, drop_priv=False):
 
     iidfile = _p.join(tmpdir.name, '__iid')
     try:
-        sh.docker.build('-' if drop_priv else '.',
+        sh.docker.build('.',
+                        f='-' if bool(drop_priv) else False,
                         iidfile=iidfile,
-                        pull='false',
-                        _in=dockerfile if drop_priv else None,
+                        _in=dockerfile if bool(drop_priv) else None,
                         _cwd=build_context,
                         _err_to_out=bool(fg),
                         _out=sys.stdout if bool(fg) else None,

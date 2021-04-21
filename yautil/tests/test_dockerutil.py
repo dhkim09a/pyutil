@@ -5,8 +5,6 @@ from unittest import TestCase
 from yautil import docker_sh
 from tempfile import TemporaryDirectory
 
-from yautil.dockerutil import dsh
-
 
 class TestDocker(TestCase):
     tmpdir: TemporaryDirectory
