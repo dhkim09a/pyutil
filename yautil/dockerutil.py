@@ -1,5 +1,6 @@
 import getpass
 import os
+import sys
 import tempfile
 from os import path as _p
 from typing import Union, List
@@ -26,9 +27,12 @@ def __build(build_context, fg=False, drop_priv=False):
             f' && groupadd -g {gid} {username}'
             f' ;  useradd -l -u {uid} -g {groupname} {username}'
             f' && install -d -m 0755 -o {username} -g {groupname} {home}'
-            f' && echo {username} > /root/username'
             f'\n'
-            f'ENTRYPOINT ["chroot", "--skip-chdir", "--userspec={username}:dialout", "/"]'
+            f'ENV HOME={home}'
+            f'\n'
+            f'ENV USER={username}'
+            f'\n'
+            f'USER {uid}:{gid}'
         )
 
     tmpdir = tempfile.TemporaryDirectory()
@@ -40,7 +44,8 @@ def __build(build_context, fg=False, drop_priv=False):
                         pull='false',
                         _in=dockerfile if drop_priv else None,
                         _cwd=build_context,
-                        _fg=fg,
+                        _err_to_out=bool(fg),
+                        _out=sys.stdout if bool(fg) else None,
                         )
     except Exception:
         raise Exception(f'failed to build a docker image with build context at {build_context}')
@@ -49,52 +54,10 @@ def __build(build_context, fg=False, drop_priv=False):
         return f.read()
 
 
-def __create(image_id: str, commands: str, volumes=None):
-    tmpdir = tempfile.TemporaryDirectory()
-
-    cidfile = _p.join(tmpdir.name, '__cid')
-
-    if not volumes:
-        v_opts = []
-    elif isinstance(volumes, str):
-        v_opts = [f'-v={volumes}']
-    elif isinstance(volumes, list):
-        v_opts = [*map(lambda o: f'-v={o}', volumes)]
-    else:
-        raise Exception
-
-    sh.docker.create(f'--cidfile={cidfile}',
-                     *v_opts,
-                     '-i',
-                     '--rm',  # Automatically remove the container when it exits
-                     image_id,
-                     '/bin/bash',
-                     c=commands,
-                     )
-    with open(cidfile, 'r') as f:
-        return f.read()
-
-
-# @deprecated
-def dsh(*args,
-        _volumes=None,
-        _root=False,
-        _auto_remove=True,
-        _verbose=False,
-        _cwd=None,
-        _build_context=None,
-        **kwargs,
-        ):
-
-    return docker_sh(_build_context, root=_root, verbose=_verbose, volumes=_volumes, auto_remove=_auto_remove,
-                     _fg=kwargs['_fg'] if '_fg' in kwargs else None)(*args, **kwargs)
-
-
 def docker_sh(
         docker_context: str,
         root: bool = False,
         verbose: bool = False,
-        _fg: bool = False,
         volumes: Union[str, List[str]] = None,
         auto_remove: bool = True,
 ) -> sh.Command:
@@ -126,8 +89,8 @@ def docker_sh(
     run = sh.docker.run.bake(
         *v_opts,
         '-d=false',
-        i=bool(_fg),
-        rm=auto_remove,  # Automatically remove the container when it exits
+        i=True,
+        rm=bool(auto_remove),  # Automatically remove the container when it exits
         workdir=home,
     )
 
