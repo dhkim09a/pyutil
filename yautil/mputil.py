@@ -81,7 +81,7 @@ def _func_wrapper(self_id, ret: list, arglist: List[Tuple]):
         signal.signal(signal.SIGALRM, _sighandler)
 
     for argset in arglist:
-        func, args, kwargs = argset
+        func, args, kwargs, _siz = argset
         # print('wrapper: self_id: ' + str(self_id) + ', func: ' + str(func) + ', args: ' + str(args) + ', kwargs: ' + str(kwargs))
         if self.task_timeout > 0:
             signal.alarm(self.task_timeout)
@@ -102,7 +102,7 @@ def _func_wrapper(self_id, ret: list, arglist: List[Tuple]):
                 ret.append(result)
             except Exception as e:
                 print('MpUtil error: can\'t handle results from ' + str(func) + '(' + str(args) + ', ' + str(kwargs) + '). ' + str(e))
-        count += 1
+        count += _siz
 
     return self_id, count, ret
 
@@ -168,9 +168,9 @@ class MpUtil:
         self.queue = []
         self.free.value -= 1
 
-    def schedule(self, func: callable, *args, **kwargs):
+    def schedule(self, func: callable, *args, _siz: int = 1, **kwargs):
         with self.free.get_lock():
-            self.queue.append((func, args, kwargs))
+            self.queue.append((func, args, kwargs, _siz))
 
             if self.free.value > 0:
                 self.flush()

@@ -4,6 +4,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from os import path as _p
+from typing import Union, List
 
 import sh
 
@@ -68,9 +70,76 @@ def check_ignored(path, ignored_dirs):
     return False
 
 
+def __find(root: str,
+           name: Union[str, List[str]] = None,
+           type: str = None,
+           depth: int = None,
+           exclude_dir: Union[str, List[str]] = None,
+           ) -> any:
+
+    find_opts = [root]
+    find_target_opts = []
+
+    if depth is not None:
+        find_opts.extend(['-maxdepth', depth])
+
+    if name:
+        if not isinstance(name, list):
+            name = [name]
+
+        find_target_opts += '('
+        while name:
+            find_target_opts.extend(['-name', name.pop()])
+            if name:
+                find_target_opts.append('-o')
+        find_target_opts += ')'
+
+    if type:
+        find_target_opts.extend(['-type', type])
+
+    if exclude_dir:
+        if not isinstance(exclude_dir, list):
+            exclude_dir = [exclude_dir]
+
+        find_opts.extend(['-type', 'd', '('])
+        while exclude_dir:
+            find_opts.extend(['-path', _p.join(root, exclude_dir.pop())])
+            if exclude_dir:
+                find_opts.append('-o')
+        find_opts.extend([')', '-prune', '-o', *find_target_opts, '-print'])
+    else:
+        find_opts.extend(find_target_opts)
+
+    # print(find_opts)
+
+    for path in sh.find(*find_opts, _iter=True):
+        if path:
+            yield str(path).strip()
+
+
+def find(root: str,
+         name: str = None,
+         type: str = None,
+         depth: int = None,
+         exclude_dir: Union[str, List[str]] = None,
+         iter: bool = False,
+         ) -> any:
+    ret = __find(root=root, name=name, type=type, depth=depth, exclude_dir=exclude_dir)
+    if iter:
+        return ret
+    else:
+        return [*ret]
+
+
 def find_recursive(root: str, name_patterns: list = None, ignored_dirs=None, type='any', depth=-1, sort=False):
     if sys.platform == "darwin" or sys.platform.startswith('linux'):
-        return find_recursive_unix(root, name_patterns=name_patterns, ignored_dirs=ignored_dirs, type=type, depth=depth, sort=sort)
+        # return find_recursive_unix(root, name_patterns=name_patterns, ignored_dirs=ignored_dirs, type=type, depth=depth, sort=sort)
+        paths = find(root,
+                     name=name_patterns,
+                     type='d' if type == 'dir' else 'f' if type == 'file' else None,
+                     depth=depth if depth >= 0 else None,
+                     exclude_dir=ignored_dirs)
+        return paths.sort() if sort else paths
     else:
         paths = []
         for root, dirs, fnames in os.walk(root):
