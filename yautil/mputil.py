@@ -71,6 +71,11 @@ def _on_done(result):
         self.free.value += 1
         self.free_cond.notify()
 
+        # if len(self.queue) >= self.maxchunksize:
+        #     self.flush(max_n=1, nonblock=True)
+        # else:
+        #     self.free_cond.notify()
+
 
 def _func_wrapper(self_id, ret: list, arglist: List[Tuple]):
     count: int = 0
@@ -117,7 +122,7 @@ class MpUtil:
     results: list
     buffer: List[List]
     id = None
-    maxchunksize: int
+    __maxchunksize: int
     task_timeout: int
     arg0: object
 
@@ -162,28 +167,51 @@ class MpUtil:
         if _obj_idmap:
             _obj_idmap.pop(self.id)
 
-    def flush(self):
-        ret: list = self.buffer.pop()
-        self.pool.apply_async(LogExceptions(_func_wrapper), (self.id, ret, self.queue,), callback=_on_done)
-        self.queue = []
-        self.free.value -= 1
+    @property
+    def maxchunksize(self):
+        return self.__maxchunksize
+    
+    @maxchunksize.setter
+    def maxchunksize(self, val: int):
+        self.__maxchunksize = max(val, 1)
 
-    def schedule(self, func: callable, *args, _siz: int = 1, **kwargs):
+    def flush(self, max_n: int = None, nonblock=False):
+        # if nonblock and self.free.value == 0:
+        #     return
+        # if max_n is None:
+        while self.queue:
+        # while ((max_n is None) or (max_n is not None and max_n > 0)) and self.queue:
+            with self.free.get_lock():
+                if max_n is not None:
+                    max_n -= 1
+                if nonblock and self.free.value == 0:
+                    return
+                while self.free.value == 0:
+                    self.free_cond.wait()
+                ret: list = self.buffer.pop()
+                self.pool.apply_async(LogExceptions(_func_wrapper), (self.id, ret, self.queue[:self.maxchunksize],), callback=_on_done)
+                self.queue = self.queue[self.maxchunksize:]
+                self.free.value -= 1
+
+    def schedule(self, func: callable, *args, _siz: int = 1, _nonblock=False, **kwargs):
         with self.free.get_lock():
             self.queue.append((func, args, kwargs, _siz))
 
-            if self.free.value > 0:
-                self.flush()
-                return
+        # if self.free.value > 0:
+        # self.flush(nonblock=True)
+            # return
 
+        # with self.free.get_lock():
             if len(self.queue) < self.maxchunksize:
                 return
+        
+        # if _nonblock:
+        #     return
 
-            while self.free.value == 0:
-                self.free_cond.wait()
-            self.flush()
+        self.flush(nonblock=_nonblock)
 
     def wait(self):
+        # with self.free.get_lock():
         self.flush()
         self.pool.close()
         self.pool.join()

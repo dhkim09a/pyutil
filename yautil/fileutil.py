@@ -75,6 +75,7 @@ def __find(root: str,
            type: str = None,
            depth: int = None,
            exclude_dir: Union[str, List[str]] = None,
+           iter_nonblock: bool = False
            ) -> any:
 
     find_opts = [root]
@@ -112,7 +113,7 @@ def __find(root: str,
 
     # print(find_opts)
 
-    for path in sh.find(*find_opts, _iter=True):
+    for path in sh.find(*find_opts, _iter_noblock=iter_nonblock, _iter=True):
         if path:
             yield str(path).strip()
 
@@ -123,9 +124,11 @@ def find(root: str,
          depth: int = None,
          exclude_dir: Union[str, List[str]] = None,
          iter: bool = False,
+         iter_nonblock: bool = False,
          ) -> any:
-    ret = __find(root=root, name=name, type=type, depth=depth, exclude_dir=exclude_dir)
-    if iter:
+    ret = __find(root=root, name=name, type=type, depth=depth, exclude_dir=exclude_dir,
+                 iter_nonblock=iter_nonblock)
+    if iter or iter_nonblock:
         return ret
     else:
         return [*ret]
