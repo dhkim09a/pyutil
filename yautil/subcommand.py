@@ -13,6 +13,23 @@ except ImportError:
     pass
 
 
+class TolerableSubParsersAction(argparse._SubParsersAction):
+    @property
+    def choices(self):
+        return None
+
+    @choices.setter
+    def choices(self, val):
+        pass
+
+    def __call__(self, parser, namespace, values, *args, **kwargs):
+        try:
+            super().__call__(parser, namespace, values, *args, **kwargs)
+        except argparse.ArgumentError:
+            vars(namespace).setdefault(argparse._UNRECOGNIZED_ARGS_ATTR, [])
+            getattr(namespace, argparse._UNRECOGNIZED_ARGS_ATTR).extend(values)
+
+
 class SubcommandParser(argparse.ArgumentParser):
     subparsers = None
     shared_parser = None
@@ -37,12 +54,16 @@ class SubcommandParser(argparse.ArgumentParser):
         self.allow_unknown_args = False
 
     def add_subcommands(self, *subcommands, title='subcommands', required=True, help=None, metavar=None):
+        if not self.shared_parser:
+            self.shared_parser = argparse.ArgumentParser(add_help=False)
+            # self.shared_parser = self
         if not self.subparsers:
             self.subparsers = self.add_subparsers(
                 title=title,
                 required=required,
                 help=help,
                 metavar=metavar,
+                **{'action': TolerableSubParsersAction} if self.allow_unknown_args else {},
             )
             self.subparsers.dest = 'subcommand'
 
@@ -80,8 +101,13 @@ class SubcommandParser(argparse.ArgumentParser):
     def add_argument(self, *args, shared: bool = False, **kwargs):
         if shared:
             if not self.shared_parser:
+                # assert False
                 self.shared_parser = argparse.ArgumentParser(add_help=False)
+                # self.shared_parser = self
 
+            # for myself
+            super().add_argument(*args, **kwargs)
+            # for my children
             return self.shared_parser.add_argument(*args, **kwargs)
 
         return super().add_argument(*args, **kwargs)
@@ -105,12 +131,16 @@ class Subcommand:
 
         self.parser = subparsers.add_parser(self.name, **kwargs)
         self.parser.__class__ = SubcommandParser
+        if True: # shared args are propagated to children and decendants
+            pass
+        else: # ALL commands (even in different subcommand tree) shares shared args
+            self.parser.shared_parser = parent
         self.on_parser_init(self.parser)
         self.parser.set_defaults(
             _func=self.on_command,
             _allow_unknown_args=self.parser.allow_unknown_args,
         )
-        subparsers.metavar = 'command'
+        subparsers.metavar = ''
 
     def __init__(self, subparsers = None, name: str = None, help: str = '', dependency: Union[str, List[str]] = ''):
         self.name = name if name else type(self).__name__.lower()

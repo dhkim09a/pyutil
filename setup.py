@@ -11,7 +11,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="yautil", # Replace with your own username
-    version="0.0.43",
+    version="0.0.44",
     author="Donghwi Kim",
     author_email="dhkim09@kaist.ac.kr",
     description="Yet Another Python util.",

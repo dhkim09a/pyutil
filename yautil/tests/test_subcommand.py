@@ -136,6 +136,8 @@ class TestSubcommand(TestCase):
             def on_command(self, args):
                 assert cmd == 'cmda'
 
+                assert args.x
+
         parser = SubcommandParser()
 
         parser.add_argument('-x', action='store_true', shared=True)

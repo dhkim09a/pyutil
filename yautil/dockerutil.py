@@ -23,10 +23,14 @@ def __build(build_context, fg=False, drop_priv=False):
             dockerfile = f.read()
         dockerfile += (
             f'\n'
+            f'SHELL ["/bin/bash", "-c"]'
+            f'\n'
             f'RUN if [ "$(id -u {username} > /dev/null 2>&1; echo $?)" == 0 ]; then userdel {username}; fi'
             f' && groupadd -g {gid} {username}'
             f' ;  useradd -l -u {uid} -g {groupname} {username}'
             f' && install -d -m 0755 -o {username} -g {groupname} {home}'
+            f'\n'
+            f'SHELL ["/bin/sh", "-c"]'
             f'\n'
             f'ENV HOME={home}'
             f'\n'
