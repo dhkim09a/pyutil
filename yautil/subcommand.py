@@ -32,7 +32,9 @@ class TolerableSubParsersAction(argparse._SubParsersAction):
 
 class SubcommandParser(argparse.ArgumentParser):
     subparsers = None
-    shared_parser = None
+    subcommands: list = None
+    parent_shared_parsers: List[argparse.ArgumentParser] = None
+    shared_parser: argparse.ArgumentParser = None
 
     argcomplete: bool
     __allow_unknown_args: bool
@@ -54,9 +56,6 @@ class SubcommandParser(argparse.ArgumentParser):
         self.allow_unknown_args = False
 
     def add_subcommands(self, *subcommands, title='subcommands', required=True, help=None, metavar=None):
-        if not self.shared_parser:
-            self.shared_parser = argparse.ArgumentParser(add_help=False)
-            # self.shared_parser = self
         if not self.subparsers:
             self.subparsers = self.add_subparsers(
                 title=title,
@@ -67,11 +66,21 @@ class SubcommandParser(argparse.ArgumentParser):
             )
             self.subparsers.dest = 'subcommand'
 
-        for subcommand in subcommands:
+        if not self.subcommands:
+            self.subcommands = []
+
+        self.subcommands.extend(list(subcommands))
+
+    def _register_subcommands(self):
+        if not self.subcommands:
+            return
+        for subcommand in self.subcommands:
             if not isinstance(subcommand, Subcommand):
                 raise TypeError(str(subcommand.__class__) + 'is not Subcommand')
             subcommand._register(self.subparsers,
-                                 parent=self.shared_parser)
+                                 parents=[*(self.parent_shared_parsers if self.parent_shared_parsers else []),
+                                          *([self.shared_parser] if self.shared_parser else [])],
+                                 )
 
     def try_argcomplete(self):
         if 'argcomplete' in globals() and not isinstance(argcomplete, DummyModule):
@@ -82,6 +91,7 @@ class SubcommandParser(argparse.ArgumentParser):
     def parse_args(self, *args, **kwargs) -> any:
         if self.argcomplete:
             self.try_argcomplete()
+        self._register_subcommands()
         parsed_args, unknown_args = super().parse_known_args(*args, **kwargs)
         if unknown_args and not parsed_args._allow_unknown_args:
             msg = _('unrecognized arguments: %s')
@@ -101,9 +111,7 @@ class SubcommandParser(argparse.ArgumentParser):
     def add_argument(self, *args, shared: bool = False, **kwargs):
         if shared:
             if not self.shared_parser:
-                # assert False
                 self.shared_parser = argparse.ArgumentParser(add_help=False)
-                # self.shared_parser = self
 
             # for myself
             super().add_argument(*args, **kwargs)
@@ -124,18 +132,16 @@ class Subcommand:
     def on_command(self, args, unknown_args=None):
         raise NotImplementedError
 
-    def _register(self, subparsers, parent: argparse.ArgumentParser = None):
+    def _register(self, subparsers, parents: List[argparse.ArgumentParser] = None):
         kwargs = {'help': self.help}
-        if parent:
-            kwargs['parents'] = [parent]
+        if parents:
+            kwargs['parents'] = parents
 
         self.parser = subparsers.add_parser(self.name, **kwargs)
         self.parser.__class__ = SubcommandParser
-        if True: # shared args are propagated to children and decendants
-            pass
-        else: # ALL commands (even in different subcommand tree) shares shared args
-            self.parser.shared_parser = parent
+        self.parser.parent_shared_parsers = parents
         self.on_parser_init(self.parser)
+        self.parser._register_subcommands()
         self.parser.set_defaults(
             _func=self.on_command,
             _allow_unknown_args=self.parser.allow_unknown_args,
