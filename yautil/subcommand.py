@@ -55,16 +55,15 @@ class SubcommandParser(argparse.ArgumentParser):
         self.argcomplete = argcomplete
         self.allow_unknown_args = False
 
-    def add_subcommands(self, *subcommands, title='subcommands', required=True, help=None, metavar=None):
+    def add_subcommands(self, *subcommands, title=None, required=True, help=None, metavar='SUBCOMMAND'):
         if not self.subparsers:
             self.subparsers = self.add_subparsers(
-                title=title,
+                **{'title': title} if title else {},
                 required=required,
                 help=help,
                 metavar=metavar,
                 **{'action': TolerableSubParsersAction} if self.allow_unknown_args else {},
             )
-            self.subparsers.dest = 'subcommand'
 
         if not self.subcommands:
             self.subcommands = []
@@ -146,7 +145,6 @@ class Subcommand:
             _func=self.on_command,
             _allow_unknown_args=self.parser.allow_unknown_args,
         )
-        subparsers.metavar = ''
 
     def __init__(self, subparsers = None, name: str = None, help: str = '', dependency: Union[str, List[str]] = ''):
         self.name = name if name else type(self).__name__.lower()
