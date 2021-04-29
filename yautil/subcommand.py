@@ -89,9 +89,9 @@ class SubcommandParser(argparse.ArgumentParser):
             print('warning: install \'argcomplete\' package to enable bash autocomplete')
 
     def parse_args(self, *args, **kwargs) -> any:
+        self._register_subcommands()
         if self.argcomplete:
             self.try_argcomplete()
-        self._register_subcommands()
         parsed_args, unknown_args = super().parse_known_args(*args, **kwargs)
         if unknown_args and not parsed_args._allow_unknown_args:
             msg = _('unrecognized arguments: %s')
