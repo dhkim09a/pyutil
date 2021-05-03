@@ -38,5 +38,6 @@ from .plotutil import plot_cdf, plot_linear, plot_scatter, plot_box
 from .cacheutil import PersistentCache
 from .dockerutil import docker_sh
 from .gitutil import git_expand
+from .pyshutil import compile_shargs
 
 builtins.__import__ = realimport
