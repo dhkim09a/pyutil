@@ -34,11 +34,11 @@ def highlight_str(string: str, start: int, end: int):
     return hl_str
 
 
-def auto_print(string: str):
+def auto_print(string: str, **kwargs):
     if os.fstat(0) == os.fstat(1):
-        print(string)
+        print(string, **kwargs)
     else:
-        print(re.sub(r'\033\[[0-9,;]*[m,K]', '', string))
+        print(re.sub(r'\033\[[0-9,;]*[m,K]', '', string), **kwargs)
 
 
 def strcompare(left: str, right: str, width: int = None, highlight: bool = True) -> str:
