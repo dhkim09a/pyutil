@@ -6,6 +6,14 @@ from os import path as _p
 import sh
 
 
+class AlreadyMountedError(Exception):
+    pass
+
+
+class NotMountedError(Exception):
+    pass
+
+
 class Mount:
     __mountable: None
     __mode: str
@@ -17,7 +25,7 @@ class Mount:
         self.__mode = mode
 
         if not mount_point:
-            self.__tmpdir = TemporaryDirectory()
+            self.__tmpdir = TemporaryDirectory(prefix='yautil-mountutil-')
             mount_point = self.__tmpdir.name
 
         self.__mount_point = mount_point
@@ -27,17 +35,31 @@ class Mount:
         return self.__mount_point
 
     def umount(self):
+        if not self.__mountable._is_mounted:
+            raise NotMountedError('Not mounted')
+
+        self.__mountable._is_mounted = False
         return self.__mountable._umount(self.name)
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.umount()
+        try:
+            self.umount()
+        except NotMountedError:
+            pass
+
+    def __del__(self):
+        try:
+            self.umount()
+        except NotMountedError:
+            pass
 
 
 class Mountable:
     __file: str
+    _is_mounted: bool = False
 
     def __init__(self, file: str):
         if not _p.isfile(file):
@@ -64,7 +86,7 @@ class Mountable:
         raise NotImplementedError
 
     @property
-    def volumes(self) -> Union[list, None]:
+    def partitions(self) -> Union[list, None]:
         return None
 
     @property
@@ -83,11 +105,15 @@ class Mountable:
 
 
 def mount(mountable: Mountable, mode: str = 'rw', mount_point: str = None) -> Mount:
-    if mountable.volumes:
-        raise Exception('Specify one of volumes.')
+    if mountable._is_mounted:
+        raise AlreadyMountedError('Already mounted')
+
+    if mountable.partitions:
+        raise Exception('Specify one of partitions.')
 
     m = Mount(mountable, mode, mount_point)
 
+    mountable._is_mounted = True
     mountable._mount(mountable.name, mode, m.name)
 
     return m

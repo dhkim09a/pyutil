@@ -1,16 +1,17 @@
 import glob
 import re
 import time
-from typing import Union
+from typing import Union, List
 import os
 from os import path as _p
 
 import sh
 
 from .mountable import Mountable
+from .block_dev_handle import BlockDevHandle
 
 
-class QemuNbdContext:
+class QemuNbdHandle(BlockDevHandle):
     __img: str
     __dev: str = None
     __load_nbd = False
@@ -18,7 +19,7 @@ class QemuNbdContext:
     def __init__(self, img: str):
         self.__img = img
 
-    def get_nbd_dev_avail(self):
+    def find_free_nbd_dev(self):
         nbd_dev_avail = None
         modules, sizes, deps = zip(*[l.split(maxsplit=2) for l in str(sh.lsmod()).splitlines()])
 
@@ -43,10 +44,10 @@ class QemuNbdContext:
         return f'/dev/{nbd_dev_avail}'
 
     def map(self) -> str:
-        if self.dev:
-            return self.dev
+        if self.base_dev:
+            return self.base_dev
 
-        dev = self.get_nbd_dev_avail()
+        dev = self.find_free_nbd_dev()
 
         assert dev
 
@@ -58,7 +59,7 @@ class QemuNbdContext:
 
         self.__dev = dev
 
-        return self.dev
+        return self.base_dev
 
     def unmap(self):
         if self.__dev:
@@ -66,17 +67,21 @@ class QemuNbdContext:
             self.__dev = None
 
     @property
-    def dev(self) -> str:
+    def base_dev(self) -> str:
         return self.__dev
+
+    @property
+    def devs(self) -> List[str]:
+        return [*filter(lambda d: re.search(fr'{self.base_dev}[a-zA-Z]', d), glob.glob('/dev/*'))]
 
     def __del__(self):
         self.unmap()
 
 
 class QemuQcow2Image(Mountable):
-    __nbd_ctx_: QemuNbdContext = None
+    __nbd_ctx_: QemuNbdHandle = None
     __dev: str = None
-    __volumes: list = None
+    __partitions: List[Mountable] = None
 
     def __init__(self, file: str, dev: str = None):
         super().__init__(file)
@@ -95,23 +100,20 @@ class QemuQcow2Image(Mountable):
         return r'^QEMU QCOW2 Image'
 
     @property
-    def volumes(self) -> Union[list, None]:
+    def partitions(self) -> Union[list, None]:
         if self.__dev:
             return None
 
-        if self.__volumes:
-            return self.__volumes
+        if self.__partitions:
+            return self.__partitions
 
         self.__nbd_ctx.map()
-        devs = [*filter(lambda d: re.search(fr'{self.__nbd_ctx.dev}[a-zA-Z]', d),
-                        [f'/dev/{d}' for d in os.listdir('/dev')])]
-        self.__volumes = [QemuQcow2Image(self.name, dev=dev)
-                          for dev in filter(lambda d: d != self.__nbd_ctx.dev, devs)]
+        self.__partitions = [QemuQcow2Image(self.name, dev=dev) for dev in self.__nbd_ctx.devs]
 
-        return self.__volumes
+        return self.__partitions
 
     @property
-    def __nbd_ctx(self) -> QemuNbdContext:
+    def __nbd_ctx(self) -> QemuNbdHandle:
         if not self.__nbd_ctx_:
-            self.__nbd_ctx_ = QemuNbdContext(self.name)
+            self.__nbd_ctx_ = QemuNbdHandle(self.name)
         return self.__nbd_ctx_
