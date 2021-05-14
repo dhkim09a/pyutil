@@ -1,5 +1,9 @@
 import glob
+import re
+import time
 from typing import Union
+import os
+from os import path as _p
 
 import sh
 
@@ -14,38 +18,41 @@ class QemuNbdContext:
     def __init__(self, img: str):
         self.__img = img
 
-    def map(self) -> str:
-        if self.dev:
-            return self.dev
-
-        nbd_id = 0
+    def get_nbd_dev_avail(self):
+        nbd_dev_avail = None
         modules, sizes, deps = zip(*[l.split(maxsplit=2) for l in str(sh.lsmod()).splitlines()])
 
         if 'nbd' not in modules:
             sh.sudo.modprobe('nbd', 'max_part=8', _fg=True)
             self.__load_nbd = True
 
-        if (num_nbd := len(glob.glob('/dev/nbd*'))) == 0:
+        if not (nbd_devs := [*filter(lambda d: re.search(r'^nbd\d+$', d), os.listdir('/dev'))]):
             self.unmap()
             raise Exception('Failed to load nbd')
 
-        for nbd_id in range(num_nbd + 1):
-            if nbd_id == num_nbd:
-                self.unmap()
-                raise Exception('No nbd is available for mounting a qemu image')
-
-            with open(fr'/sys/class/block/nbd{nbd_id}/size') as f:
+        for nbd_dev in nbd_devs:
+            with open(fr'/sys/class/block/{nbd_dev}/size') as f:
                 if f.read() == '0\n':
+                    nbd_dev_avail = nbd_dev
                     break
 
-        fmt = 'raw'
-        if self.__img.endswith(r'.qcow2'):
-            fmt = 'qcow2'
+        if not nbd_dev_avail:
+            self.unmap()
+            raise Exception('No nbd is available for mounting a qemu image')
 
-        dev = f'/dev/nbd{nbd_id}'
+        return f'/dev/{nbd_dev_avail}'
+
+    def map(self) -> str:
+        if self.dev:
+            return self.dev
+
+        dev = self.get_nbd_dev_avail()
+
+        assert dev
 
         try:
-            sh.sudo('qemu-nbd', '--connect', dev, '-f', fmt, self.__img, _fg=True)
+            sh.sudo('qemu-nbd', '--connect', dev, '-f', 'qcow2', self.__img, _fg=True)
+            time.sleep(1)
         except sh.ErrorReturnCode_1:
             raise Exception(f'failed to open {self.__img}')
 
@@ -58,20 +65,9 @@ class QemuNbdContext:
             sh.sudo('qemu-nbd', '--disconnect', self.__dev, _fg=True)
             self.__dev = None
 
-        # if self.__load_nbd:
-        #     sh.sudo.rmmod('nbd', _fg=True)
-
     @property
     def dev(self) -> str:
         return self.__dev
-
-    def __enter__(self):
-        if not self.__dev:
-            self.map()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.unmap()
 
     def __del__(self):
         self.unmap()
@@ -80,6 +76,7 @@ class QemuNbdContext:
 class QemuQcow2Image(Mountable):
     __nbd_ctx_: QemuNbdContext = None
     __dev: str = None
+    __volumes: list = None
 
     def __init__(self, file: str, dev: str = None):
         super().__init__(file)
@@ -95,15 +92,23 @@ class QemuQcow2Image(Mountable):
 
     @classmethod
     def _pattern(cls) -> str:
-        pass
+        return r'^QEMU QCOW2 Image'
 
     @property
     def volumes(self) -> Union[list, None]:
         if self.__dev:
             return None
 
-        devs = glob.glob(self.__nbd_ctx.dev + '*')
-        return [QemuQcow2Image(self.name, dev=dev) for dev in filter(lambda d: d != self.__nbd_ctx.dev, devs)]
+        if self.__volumes:
+            return self.__volumes
+
+        self.__nbd_ctx.map()
+        devs = [*filter(lambda d: re.search(fr'{self.__nbd_ctx.dev}[a-zA-Z]', d),
+                        [f'/dev/{d}' for d in os.listdir('/dev')])]
+        self.__volumes = [QemuQcow2Image(self.name, dev=dev)
+                          for dev in filter(lambda d: d != self.__nbd_ctx.dev, devs)]
+
+        return self.__volumes
 
     @property
     def __nbd_ctx(self) -> QemuNbdContext:
