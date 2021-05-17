@@ -3,14 +3,20 @@ from typing import Union, List
 
 import sh
 
-from . import Mountable, LinuxDiskImage
+from ..core import Mountable
+from .linux_disk_image import LinuxDiskImage
 
 
 class DiskImage(Mountable):
     __partitions: List[Mountable] = None
+    __in_qcow2: bool = False
+
+    def __init__(self, file: str, in_qcow2: bool = False):
+        super().__init__(file)
+        self.__in_qcow2 = in_qcow2
 
     def __iter_partitions(self):
-        rc = sh.fdisk(self.name, l=True, o='Start,End,Sectors', color='never', _iter=True)
+        rc = sh.fdisk(self.name, l=True, o='Start,End,Sectors,Type', color='never', _iter=True)
         sector_size = 512
 
         for line in rc:
@@ -26,7 +32,9 @@ class DiskImage(Mountable):
             line = str(line).strip()
 
             try:
-                start, end, sectors = (*map(int, line.split()),)
+                # be aware that 'type' may include spaces.
+                start, end, sectors, type = line.split(maxsplit=3)
+                start, end, sectors = (int(i) for i in [start, end, sectors])
             except ValueError:
                 # skip column titles
                 continue
@@ -34,7 +42,7 @@ class DiskImage(Mountable):
             assert end - start + 1 == sectors
             # print(f'start: {start}, sector_size: {sector_size}')
 
-            yield start * sector_size, sectors * sector_size
+            yield start * sector_size, sectors * sector_size, type
 
     def _mount(self, file: str, mode: str, mount_point: str):
         assert False
@@ -52,7 +60,11 @@ class DiskImage(Mountable):
             return self.__partitions
 
         self.__partitions = []
-        for start, size in self.__iter_partitions():
-            self.__partitions.append(LinuxDiskImage(self.name, offset=start, lomode='udisksctl'))
+        for start, size, type in self.__iter_partitions():
+            if type != 'Linux filesystem':
+                raise NotImplementedError('only Linux filesystem partitions are supported for now')
+            self.__partitions.append(
+                LinuxDiskImage(self.name, offset=start, lomode='udisksctl' if self.__in_qcow2 else 'mount')
+            )
 
         return self.__partitions

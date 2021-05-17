@@ -7,8 +7,8 @@ from os import path as _p
 
 import sh
 
-from .mountable import Mountable
-from .block_dev_handle import BlockDevHandle
+from yautil.mountutil.core import Mountable
+from yautil.mountutil.block_dev_handle import BlockDevHandle
 
 
 class QemuNbdHandle(BlockDevHandle):

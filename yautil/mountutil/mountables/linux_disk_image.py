@@ -1,12 +1,7 @@
-import getpass
-import re
-import sys
-
-import keyring
 import sh
 
-from .mountable import Mountable
-from .udisksctl import udisksctl, udisksctl_losetup, udisksctl_mount
+from ..core import Mountable
+from ..udisksctl import udisksctl, udisksctl_losetup, udisksctl_mount
 
 
 class UDisksCtlCtx:

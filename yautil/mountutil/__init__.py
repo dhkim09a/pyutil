@@ -1,5 +1,5 @@
-from .mountable import Mountable, mount
-from .linux_disk_image import LinuxDiskImage
-from .qemu_qcow2_image import QemuQcow2Image
-from .qcow2_image import Qcow2Image
-from .disk_image import DiskImage
+from .core import Mountable, mount
+
+from .mountables.linux_disk_image import LinuxDiskImage
+from .mountables.qcow2_image import Qcow2Image
+from .mountables.disk_image import DiskImage

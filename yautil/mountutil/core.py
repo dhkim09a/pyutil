@@ -5,6 +5,22 @@ from os import path as _p
 
 import sh
 
+# Two types of usages we target.
+# Usage 1:
+#
+# mountable = Mountable('/file')
+#
+# with mount(mountable, 'rw') as m:
+#     print(os.listdir(m.name))
+#
+# Usage 2:
+#
+# mountable = Mountable('/file')
+#
+# m = mount(mountable, 'rw')
+# print(os.listdir(m.name))
+# m.umount()
+
 
 class AlreadyMountedError(Exception):
     pass
@@ -14,7 +30,7 @@ class NotMountedError(Exception):
     pass
 
 
-class Mount:
+class MountPoint:
     __mountable: None
     __mode: str
     __mount_point: str
@@ -104,29 +120,16 @@ class Mountable:
                 return typ.value
 
 
-def mount(mountable: Mountable, mode: str = 'rw', mount_point: str = None) -> Mount:
+def mount(mountable: Mountable, mode: str = 'rw', mount_point: str = None) -> MountPoint:
     if mountable._is_mounted:
         raise AlreadyMountedError('Already mounted')
 
     if mountable.partitions:
         raise Exception('Specify one of partitions.')
 
-    m = Mount(mountable, mode, mount_point)
+    m = MountPoint(mountable, mode, mount_point)
 
     mountable._is_mounted = True
     mountable._mount(mountable.name, mode, m.name)
 
     return m
-
-
-def test():
-    mountable = Mountable('/file')
-
-    with mount(mountable, 'rw') as m:
-        m.name
-        pass
-
-    m = mount(mountable, 'rw')
-    m.name
-
-    m.umount()
