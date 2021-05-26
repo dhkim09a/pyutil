@@ -65,8 +65,9 @@ def _on_done(result):
         while ret:
             ret.pop()
         self.buffer.append(ret)
-        if self.pbar:
+        if self.pbar is not None:
             self.pbar.update(count)
+        self._done += count
 
         self.free.value += 1
         self.free_cond.notify()
@@ -120,6 +121,8 @@ class MpUtil:
     __maxchunksize: int
     task_timeout: int
     arg0: object
+    __total: int
+    _done: int
 
     def __init__(self, processes: int = 0, maxchunksize: int = 1, total: int = 0, desc: str = "", task_timeout=0,
                  arg0: object = None, pbar: bool = True):
@@ -138,6 +141,8 @@ class MpUtil:
         self.queue = []
         self.results = self.ctx.list([])
         self.pbar = tqdm(total=total, desc=desc) if pbar else None
+        self.__total = total
+        self._done = 0
 
         self.buffer = self.ctx.list()
         for _ in range(processes + 1):
@@ -163,12 +168,26 @@ class MpUtil:
             _obj_idmap.pop(self.id)
 
     @property
-    def maxchunksize(self):
+    def maxchunksize(self) -> int:
         return self.__maxchunksize
     
     @maxchunksize.setter
     def maxchunksize(self, val: int):
         self.__maxchunksize = max(val, 1)
+
+    @property
+    def total(self) -> int:
+        return self.__total
+
+    @total.setter
+    def total(self, val: int):
+        self.__total = val
+        if self.pbar is not None:
+            self.pbar.total = val
+
+    @property
+    def done(self) -> int:
+        return self._done
 
     def __flush_once_locked(self, max_n: int = None, nonblock=False):
         if nonblock and self.free.value == 0:
@@ -206,7 +225,7 @@ class MpUtil:
         self.flush()
         self.pool.close()
         self.pool.join()
-        if self.pbar:
+        if self.pbar is not None:
             self.pbar.close()
         self.mpctx.log_to_stderr()
         return self.results

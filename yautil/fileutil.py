@@ -112,8 +112,17 @@ def __find(root: str,
         find_opts.extend(find_target_opts)
 
     # print(find_opts)
+    if rd := get_memtmpdir():
+        find_outs = _p.join(rd.name, 'f')
+        sh.find(*find_opts, _out=find_outs)
+        def get_paths():
+            with open(find_outs, 'r') as f:
+                while line := f.readline():
+                    yield line
+    else:
+        get_paths = sh.find.bake(*find_opts, _iter_noblock=iter_nonblock, _iter=True)
 
-    for path in sh.find(*find_opts, _iter_noblock=iter_nonblock, _iter=True):
+    for path in get_paths():
         if path:
             yield str(path).strip()
 
@@ -173,7 +182,7 @@ def overwrite(src: str, dst: str):
     overwrite.rsync(src, dst)
 
 
-def get_memtmpdir(suffix=None, prefix=None, dir=None):
+def get_memtmpdir(suffix=None, prefix=None, dir=None) -> Union[None, tempfile.TemporaryDirectory]:
     if dir:
         return tempfile.TemporaryDirectory(suffix=suffix, prefix=prefix, dir=dir)
 
