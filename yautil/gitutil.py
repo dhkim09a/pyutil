@@ -23,7 +23,8 @@ def link_repo(base: str, target: str):
 
     os.mkdir(target_repo)
 
-    items_to_copy = {'HEAD', 'ORIG_HEAD', 'index'}
+    items_to_copy = {'HEAD', 'ORIG_HEAD'}
+    items_to_omit = {'index'}
     items_to_step_in = {'logs'}
     items_to_ignore = []
 
@@ -38,6 +39,8 @@ def link_repo(base: str, target: str):
             if item in items_to_copy:
                 assert _p.isfile(_p.join(base_repo, item_path))
                 copyfile(_p.join(base_repo, item_path), _p.join(target_repo, item_path))
+            elif item in items_to_omit:
+                pass
             elif item in items_to_step_in:
                 assert _p.isdir(_p.join(base_repo, item_path))
                 os.mkdir(_p.join(target_repo, item_path))
