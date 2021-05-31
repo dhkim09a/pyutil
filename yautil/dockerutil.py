@@ -9,8 +9,27 @@ from typing import Union, List
 import sh
 
 
-def __build(build_context, fg=False, drop_priv=False):
-    dockerfile = None
+def __build(build_context, fg=False, drop_priv=False, kvm=False, xforwarding=False):
+    with open(_p.join(build_context, 'Dockerfile'), 'r') as f:
+        dockerfile = f.read()
+
+    if kvm:
+        import grp
+        kvm_gid = grp.getgrnam('kvm').gr_gid
+        dockerfile += (
+            # f'RUN apt-get install -y qemu-kvm libvirt-bin ubuntu-vm-builder bridge-utils'
+            # f'\n'
+            # f'RUN groupmod -g {kvm_gid} kvm'
+            # f'\n'
+            f'RUN groupadd -g {kvm_gid} kvm'
+            f'\n'
+        )
+
+    if xforwarding:
+        dockerfile += (
+            f'RUN apt-get install -y xinit xserver-xorg-core --no-install-recommends --no-install-suggests'
+            f'\n'
+        )
 
     if drop_priv:
         username = getpass.getuser()
@@ -19,15 +38,13 @@ def __build(build_context, fg=False, drop_priv=False):
         home = f'/home/{username}'
         groupname = f'$(getent group {gid} | cut -d: -f1)'
 
-        with open(_p.join(build_context, 'Dockerfile'), 'r') as f:
-            dockerfile = f.read()
         dockerfile += (
             f'\n'
             f'SHELL ["/bin/bash", "-c"]'
             f'\n'
             f'RUN if [ "$(id -u {username} > /dev/null 2>&1; echo $?)" == 0 ]; then userdel {username}; fi'
             f' && groupadd -g {gid} {username}'
-            f' ;  useradd -l -u {uid} -g {groupname} {username}'
+            f' ;  useradd -l -u {uid} -g {groupname} {"-G kvm" if kvm else ""} {username}'
             f' && install -d -m 0755 -o {username} -g {groupname} {home}'
             f'\n'
             f'SHELL ["/bin/sh", "-c"]'
@@ -44,9 +61,9 @@ def __build(build_context, fg=False, drop_priv=False):
     iidfile = _p.join(tmpdir.name, '__iid')
     try:
         sh.docker.build('.',
-                        f='-' if bool(drop_priv) else False,
+                        f='-',
                         iidfile=iidfile,
-                        _in=dockerfile if bool(drop_priv) else None,
+                        _in=dockerfile,
                         _cwd=build_context,
                         _err_to_out=bool(fg),
                         _out=sys.stdout if bool(fg) else None,
@@ -64,14 +81,19 @@ def docker_sh(
         verbose: bool = False,
         volumes: Union[str, List[str]] = None,
         auto_remove: bool = True,
+        kvm: bool = False,
+        xforwarding: bool = False,
 ) -> sh.Command:
 
     if (not docker_context) or (not _p.isdir(docker_context)):
         raise Exception('proper docker_context directory must be supplied')
 
+    if os.getuid() == 0:
+        root = True
+
     if verbose:
         print('Building a docker image...')
-    image_id = __build(docker_context, fg=verbose, drop_priv=not root)
+    image_id = __build(docker_context, fg=verbose, drop_priv=not root, kvm=kvm, xforwarding=xforwarding)
     if not image_id:
         raise Exception('failed to build image')
 
@@ -81,17 +103,31 @@ def docker_sh(
         username = getpass.getuser()
         home = f'/home/{username}'
 
+    run_opts = []
+
     if not volumes:
-        v_opts = []
+        pass
     elif isinstance(volumes, str):
-        v_opts = [f'-v={volumes}']
+        run_opts += [f'-v={volumes}']
     elif isinstance(volumes, list):
-        v_opts = [*map(lambda o: f'-v={o}', volumes)]
+        run_opts += [*map(lambda o: f'-v={o}', volumes)]
     else:
         raise Exception
 
+    if xforwarding:
+        # run_opts.append('-v=/tmp/.X11-unix:/tmp/.X11-unix:rw')
+        run_opts.append(f'-v={_p.join(os.environ["HOME"], ".Xauthority")}:{_p.join(home, ".Xauthority")}')
+        run_opts.append(f'-eDISPLAY={os.environ["DISPLAY"]}')
+        run_opts.append('--net=host')
+
+    if kvm:
+        run_opts.append('--device=/dev/kvm')
+        run_opts.append('--group-add=kvm')
+        # run_opts.append(f'-v=/etc/machine-id:/etc/machine-id:rw')
+        # run_opts.append(f'-eQEMU_AUDIO_DRV=none')
+
     run = sh.docker.run.bake(
-        *v_opts,
+        *run_opts,
         '-d=false',
         i=True,
         rm=bool(auto_remove),  # Automatically remove the container when it exits
