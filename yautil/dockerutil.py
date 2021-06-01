@@ -9,7 +9,7 @@ from typing import Union, List
 import sh
 
 
-def __build(build_context, fg=False, drop_priv=False, kvm=False, xforwarding=False):
+def __build(build_context, fg=False, drop_priv=False, kvm=False):
     with open(_p.join(build_context, 'Dockerfile'), 'r') as f:
         dockerfile = f.read()
 
@@ -20,16 +20,17 @@ def __build(build_context, fg=False, drop_priv=False, kvm=False, xforwarding=Fal
             # f'RUN apt-get install -y qemu-kvm libvirt-bin ubuntu-vm-builder bridge-utils'
             # f'\n'
             # f'RUN groupmod -g {kvm_gid} kvm'
-            # f'\n'
+            f'\n'
             f'RUN groupadd -g {kvm_gid} kvm'
             f'\n'
         )
 
-    if xforwarding:
-        dockerfile += (
-            f'RUN apt-get install -y xinit xserver-xorg-core --no-install-recommends --no-install-suggests'
-            f'\n'
-        )
+    # if xforwarding:
+    #     dockerfile += (
+    #         f'\n'
+    #         f'RUN apt-get install -y xinit xserver-xorg-core --no-install-recommends --no-install-suggests'
+    #         f'\n'
+    #     )
 
     if drop_priv:
         username = getpass.getuser()
@@ -54,6 +55,7 @@ def __build(build_context, fg=False, drop_priv=False, kvm=False, xforwarding=Fal
             f'ENV USER={username}'
             f'\n'
             f'USER {uid}:{gid}'
+            f'\n'
         )
 
     tmpdir = tempfile.TemporaryDirectory()
@@ -93,7 +95,7 @@ def docker_sh(
 
     if verbose:
         print('Building a docker image...')
-    image_id = __build(docker_context, fg=verbose, drop_priv=not root, kvm=kvm, xforwarding=xforwarding)
+    image_id = __build(docker_context, fg=verbose, drop_priv=not root, kvm=kvm)
     if not image_id:
         raise Exception('failed to build image')
 
