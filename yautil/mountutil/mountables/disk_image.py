@@ -42,7 +42,7 @@ class DiskImage(Mountable):
             assert end - start + 1 == sectors
             # print(f'start: {start}, sector_size: {sector_size}')
 
-            yield start * sector_size, sectors * sector_size, type
+            yield start * sector_size, sectors * sector_size, type.strip()
 
     def _mount(self, file: str, mode: str, mount_point: str):
         assert False
@@ -51,17 +51,19 @@ class DiskImage(Mountable):
         assert False
 
     @classmethod
-    def _pattern(cls) -> str:
-        return r'boot sector'
+    def _ismountable(cls, path: str = None, file_cmd_out: str = None) -> bool:
+        if file_cmd_out is None:
+            return False
+        return r'boot sector' in file_cmd_out
 
     @property
-    def partitions(self) -> Union[list, None]:
+    def partitions(self) -> Union[List[Mountable], None]:
         if self.__partitions:
             return self.__partitions
 
         self.__partitions = []
         for start, size, type in self.__iter_partitions():
-            if type != 'Linux filesystem':
+            if not type.startswith('Linux'):
                 raise NotImplementedError('only Linux filesystem partitions are supported for now')
             self.__partitions.append(
                 LinuxDiskImage(self.name, offset=start, lomode='udisksctl' if self.__in_qcow2 else 'mount')

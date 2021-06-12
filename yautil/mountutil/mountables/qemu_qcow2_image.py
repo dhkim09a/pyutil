@@ -96,8 +96,10 @@ class QemuQcow2Image(Mountable):
         sh.sudo.umount(mount_point, _fg=True)
 
     @classmethod
-    def _pattern(cls) -> str:
-        return r'^QEMU QCOW2 Image'
+    def _ismountable(cls, path: str = None, file_cmd_out: str = None) -> bool:
+        if file_cmd_out is None:
+            return False
+        return bool(re.search(r'^QEMU QCOW2 Image', file_cmd_out))
 
     @property
     def partitions(self) -> Union[list, None]:

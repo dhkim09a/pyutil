@@ -1,3 +1,5 @@
+import re
+
 import sh
 
 from ..core import Mountable
@@ -87,5 +89,7 @@ class LinuxDiskImage(Mountable):
             udisksctl('loop-delete', b=self.__dev)
 
     @classmethod
-    def _pattern(cls) -> str:
-        return r'^Linux[^,]*filesystem data'
+    def _ismountable(cls, path: str = None, file_cmd_out: str = None) -> bool:
+        if file_cmd_out is None:
+            return False
+        return bool(re.search(r'^Linux[^,]*filesystem data', file_cmd_out))

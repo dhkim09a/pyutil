@@ -15,5 +15,7 @@ class Qcow2Image(Mountable):
         sh.fusermount3('-uz', mount_point)
 
     @classmethod
-    def _pattern(cls) -> str:
-        return r'QCOW2'
+    def _ismountable(cls, path: str = None, file_cmd_out: str = None) -> bool:
+        if file_cmd_out is None:
+            return False
+        return bool(r'QCOW2' in file_cmd_out)

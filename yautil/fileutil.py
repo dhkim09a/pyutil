@@ -112,12 +112,19 @@ def __find(root: str,
         find_opts.extend(find_target_opts)
 
     # print(find_opts)
-    if rd := get_memtmpdir():
+    # if rd := get_memtmpdir():
+    rd = get_memtmpdir()
+    if rd:
         find_outs = _p.join(rd.name, 'f')
         sh.find(*find_opts, _out=find_outs)
+
         def get_paths():
             with open(find_outs, 'r') as f:
-                while line := f.readline():
+                # while line := f.readline():
+                while True:
+                    line = f.readline()
+                    if not line:
+                        break
                     yield line
     else:
         get_paths = sh.find.bake(*find_opts, _iter_noblock=iter_nonblock, _iter=True)

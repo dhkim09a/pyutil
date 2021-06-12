@@ -85,6 +85,7 @@ def docker_sh(
         auto_remove: bool = True,
         kvm: bool = False,
         xforwarding: bool = False,
+        _cwd: str = None,
 ) -> sh.Command:
 
     if (not docker_context) or (not _p.isdir(docker_context)):
@@ -133,7 +134,7 @@ def docker_sh(
         '-d=false',
         i=True,
         rm=bool(auto_remove),  # Automatically remove the container when it exits
-        workdir=home,
+        workdir=_p.realpath(_cwd) if _cwd else home,
     )
 
     return run.bake(image_id)
