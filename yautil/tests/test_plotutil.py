@@ -66,3 +66,11 @@ class TestPlotBox(TestPlot):
     def __init__(self, *args, **kwargs):
         self.plot = yautil.plot_box
         super().__init__(*args, **kwargs)
+
+
+# class TestPlotStack(TestPlot):
+#
+#     def __init__(self, *args, **kwargs):
+#         self.plot = yautil.plot_stack
+#         super().__init__(*args, **kwargs)
+

@@ -6,6 +6,7 @@ class __PlotMode(Enum):
     LINEAR = auto()
     SCATTER = auto()
     BOX = auto()
+    STACK = auto()
 
 
 def __unzip_subplot_data(subplot_data: Tuple) -> (list, list):
@@ -121,6 +122,12 @@ def __plot(*data,
                     subplot.plot(*args, **kwargs)
         elif mode == __PlotMode.BOX:
             subplot.boxplot(lines, labels=labels, **subplot_kwargs)
+        elif mode == __PlotMode.STACK:
+            x, _ = zip(*lines[0])
+            ys = []
+            for line in lines:
+                ys.append((*zip(*line),)[1])
+            subplot.stackplot(x, *ys, labels=labels, **subplot_kwargs)
 
     if legend_loc:
         plt.legend(loc=legend_loc)
@@ -420,5 +427,47 @@ def plot_box(*data,
            mode=__PlotMode.BOX,
            figsize=figsize,
            subplots_adjust=subplots_adjust,
+           **subplot_kwargs
+           )
+
+
+def plot_stack(*data,
+                titles: Union[str, List[str]] = None,
+                maxcol: int = 4,
+                xlabel: str = None,
+                ylabel: str = None,
+                xlim: List = None,
+                ylim: List = None,
+                padding: float = 0.2,
+                block: bool = True,
+                legend_loc: str = None,
+                font_family: str = None,
+                figsize: tuple = None,
+                subplots_adjust: Dict[str, float] = None,
+                **subplot_kwargs
+                ):
+
+    def __add_x_values_if_necessarily(line_data: list) -> list:
+        if isinstance(line_data[0], tuple):
+            return line_data
+
+        return list(zip(range(len(line_data)), line_data))
+
+    data = __modify_line_data(data, __add_x_values_if_necessarily)
+
+    __plot(*data,
+           titles=titles,
+           maxcol=maxcol,
+           xlabel=xlabel,
+           ylabel=ylabel,
+           xlim=xlim,
+           ylim=ylim,
+           padding=padding,
+           block=block,
+           legend_loc=legend_loc,
+           font_family=font_family,
+           figsize=figsize,
+           subplots_adjust=subplots_adjust,
+           mode=__PlotMode.STACK,
            **subplot_kwargs
            )
