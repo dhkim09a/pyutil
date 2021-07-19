@@ -70,8 +70,16 @@ def __build(build_context, fg=False, drop_priv=False, kvm=False):
                         _err_to_out=bool(fg),
                         _out=sys.stdout if bool(fg) else None,
                         )
+    except sh.ErrorReturnCode as e:
+        raise Exception(f'Failed to build a docker image with build context at {build_context}.\n'
+                        f'STDOUT:\n'
+                        f'{bytes(e.stdout).decode(sh.DEFAULT_ENCODING)}'
+                        f'\n'
+                        f'STDERR:\n'
+                        f'{bytes(e.stderr).decode(sh.DEFAULT_ENCODING)}'
+                        )
     except Exception:
-        raise Exception(f'failed to build a docker image with build context at {build_context}')
+        raise Exception(f'failed to build a docker image with build context at {build_context}.')
 
     with open(iidfile, 'r') as f:
         return f.read()
@@ -79,6 +87,7 @@ def __build(build_context, fg=False, drop_priv=False, kvm=False):
 
 def docker_sh(
         docker_context: str,
+        *docker_run_opts,
         root: bool = False,
         verbose: bool = False,
         volumes: Union[str, List[str]] = None,
@@ -106,31 +115,34 @@ def docker_sh(
         username = getpass.getuser()
         home = f'/home/{username}'
 
-    run_opts = []
+    if docker_run_opts is None:
+        docker_run_opts = []
+    else:
+        docker_run_opts = list(docker_run_opts)
 
     if not volumes:
         pass
     elif isinstance(volumes, str):
-        run_opts += [f'-v={volumes}']
+        docker_run_opts += [f'-v={volumes}']
     elif isinstance(volumes, list):
-        run_opts += [*map(lambda o: f'-v={o}', volumes)]
+        docker_run_opts += [*map(lambda o: f'-v={o}', volumes)]
     else:
         raise Exception
 
     if xforwarding:
         # run_opts.append('-v=/tmp/.X11-unix:/tmp/.X11-unix:rw')
-        run_opts.append(f'-v={_p.join(os.environ["HOME"], ".Xauthority")}:{_p.join(home, ".Xauthority")}')
-        run_opts.append(f'-eDISPLAY={os.environ["DISPLAY"]}')
-        run_opts.append('--net=host')
+        docker_run_opts.append(f'-v={_p.join(os.environ["HOME"], ".Xauthority")}:{_p.join(home, ".Xauthority")}')
+        docker_run_opts.append(f'-eDISPLAY={os.environ["DISPLAY"]}')
+        docker_run_opts.append('--net=host')
 
     if kvm:
-        run_opts.append('--device=/dev/kvm')
-        run_opts.append('--group-add=kvm')
+        docker_run_opts.append('--device=/dev/kvm')
+        docker_run_opts.append('--group-add=kvm')
         # run_opts.append(f'-v=/etc/machine-id:/etc/machine-id:rw')
         # run_opts.append(f'-eQEMU_AUDIO_DRV=none')
 
     run = sh.docker.run.bake(
-        *run_opts,
+        *docker_run_opts,
         '-d=false',
         i=True,
         rm=bool(auto_remove),  # Automatically remove the container when it exits
