@@ -76,12 +76,12 @@ class Mountable:
     _is_mounted: bool = False
 
     def __init__(self, file: str, **kwargs):
-        if not _p.isfile(file):
-            raise FileNotFoundError(file)
-
         if type(self) == Mountable:
+            if not _p.isfile(file):
+                raise FileNotFoundError(file)
+
             if not (cls := self.__resolve_cls(file)):
-                raise Exception('unsupported file type')
+                raise Exception('unsupported file type ' + file + ' ' + str(sh.file(file)))
             self.__class__ = cls
             self.__init__(file, **kwargs)
 
@@ -137,7 +137,7 @@ class Archive(Mountable):
         elif mode == 'rw':
             self.ro = False
         else:
-            raise ValueError('mode must be either \'r\' or \rw\'')
+            raise ValueError('mode must be either \'r\' or \'rw\'')
 
         self._extract(file, mount_point)
 

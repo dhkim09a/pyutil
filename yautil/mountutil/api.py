@@ -1,4 +1,5 @@
 from typing import Union
+from os import path as _p
 
 from .core import MountPoint, Mountable
 from .types import MountableType, ArchiveType
@@ -8,7 +9,9 @@ def mount(file: Union[str, Mountable], mode: str = 'rw', mount_point: str = None
           **type_specific_args) -> MountPoint:
 
     if not isinstance(file, Mountable):
-        print(file)
+        if not _p.isfile(file):
+            raise FileNotFoundError(file)
+
         file = type.instantiate(file, **type_specific_args)
 
     # if mountable._is_mounted:
@@ -26,6 +29,9 @@ def mount(file: Union[str, Mountable], mode: str = 'rw', mount_point: str = None
 
 
 def extract(file: str, dest: str, type: ArchiveType = ArchiveType.AUTO):
+    if not _p.isfile(file):
+        raise FileNotFoundError(file)
+
     a = type.instantiate(file)
 
     a._extract(file, dest)

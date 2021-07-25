@@ -94,6 +94,7 @@ def docker_sh(
         auto_remove: bool = True,
         kvm: bool = False,
         xforwarding: bool = False,
+        net: str = 'bridge',
         _cwd: str = None,
 ) -> sh.Command:
 
@@ -133,13 +134,15 @@ def docker_sh(
         # run_opts.append('-v=/tmp/.X11-unix:/tmp/.X11-unix:rw')
         docker_run_opts.append(f'-v={_p.join(os.environ["HOME"], ".Xauthority")}:{_p.join(home, ".Xauthority")}')
         docker_run_opts.append(f'-eDISPLAY={os.environ["DISPLAY"]}')
-        docker_run_opts.append('--net=host')
+        net = 'host'
 
     if kvm:
         docker_run_opts.append('--device=/dev/kvm')
         docker_run_opts.append('--group-add=kvm')
         # run_opts.append(f'-v=/etc/machine-id:/etc/machine-id:rw')
         # run_opts.append(f'-eQEMU_AUDIO_DRV=none')
+
+    docker_run_opts.append(f'--net={net}')
 
     run = sh.docker.run.bake(
         *docker_run_opts,
