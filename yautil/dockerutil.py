@@ -9,9 +9,12 @@ from typing import Union, List
 import sh
 
 
-def __build(build_context, fg=False, drop_priv=False, kvm=False):
+def __build(build_context, fg=False, dockerfile_cmds_to_append: list = None, drop_priv=False, kvm=False):
     with open(_p.join(build_context, 'Dockerfile'), 'r') as f:
         dockerfile = f.read()
+
+    if dockerfile_cmds_to_append:
+        dockerfile += '\n{cmds}\n'.format(cmds='\n'.join(dockerfile_cmds_to_append))
 
     if kvm:
         import grp
@@ -92,6 +95,7 @@ def docker_sh(
         verbose: bool = False,
         volumes: Union[str, List[str]] = None,
         auto_remove: bool = True,
+        dockerfile_cmds_to_append: list = None,
         kvm: bool = False,
         xforwarding: bool = False,
         net: str = 'bridge',
@@ -106,7 +110,8 @@ def docker_sh(
 
     if verbose:
         print('Building a docker image...')
-    image_id = __build(docker_context, fg=verbose, drop_priv=not root, kvm=kvm)
+    image_id = __build(docker_context, fg=verbose, drop_priv=not root, kvm=kvm,
+                       dockerfile_cmds_to_append=dockerfile_cmds_to_append)
     if not image_id:
         raise Exception('failed to build image')
 
