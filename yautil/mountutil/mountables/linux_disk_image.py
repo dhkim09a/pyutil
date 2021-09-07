@@ -92,4 +92,7 @@ class LinuxDiskImage(Mountable):
     def _ismountable(cls, path: str = None, file_cmd_out: str = None) -> bool:
         if file_cmd_out is None:
             return False
-        return bool(re.search(r'^Linux[^,]*filesystem data', file_cmd_out))
+        return (
+            bool(re.search(r'^Linux[^,]*filesystem data', file_cmd_out))
+            or bool(re.search(r'\bFAT\b', file_cmd_out))
+        )
