@@ -46,6 +46,7 @@ def __plot(*data,
            mode: __PlotMode = __PlotMode.LINEAR,
            figsize: tuple = None,
            subplots_adjust: Dict[str, float] = None,
+           errors = None,
            **subplot_kwargs
            ):
     """
@@ -120,6 +121,14 @@ def __plot(*data,
                     subplot.scatter(*args, **kwargs)
                 elif mode == __PlotMode.LINEAR:
                     subplot.plot(*args, **kwargs)
+                if errors:
+                    subplot.fill_between(
+                        x,
+                        [y - errors[i][j] for j, y in enumerate(y)],
+                        [y + errors[i][j] for j, y in enumerate(y)],
+                        alpha=0.3,
+                        linewidth=0,
+                    )
         elif mode == __PlotMode.BOX:
             subplot.boxplot(lines, labels=labels, **subplot_kwargs)
         elif mode == __PlotMode.STACK:
@@ -260,6 +269,7 @@ def plot_linear(*data,
                 font_family: str = None,
                 figsize: tuple = None,
                 subplots_adjust: Dict[str, float] = None,
+                errors=None,
                 **subplot_kwargs
                 ):
     """
@@ -319,6 +329,7 @@ def plot_linear(*data,
            font_family=font_family,
            figsize=figsize,
            subplots_adjust=subplots_adjust,
+           errors=errors,
            **subplot_kwargs
            )
 
