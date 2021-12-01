@@ -20,7 +20,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="yautil", # Replace with your own username
-    version="0.0.62",
+    version="0.0.63",
     author="Donghwi Kim",
     author_email="dhkim09@kaist.ac.kr",
     description="Yet Another Python util.",

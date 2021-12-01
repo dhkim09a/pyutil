@@ -75,11 +75,23 @@ def __find(root: str,
            type: str = None,
            depth: int = None,
            exclude_dir: Union[str, List[str]] = None,
-           iter_nonblock: bool = False
+           iter_nonblock: bool = False,
+           follow_symlinks: str = 'never',
            ) -> any:
 
-    find_opts = [root]
+    find_opts = []
     find_target_opts = []
+
+    if follow_symlinks == 'never':
+        find_opts.append('-P')
+    elif follow_symlinks == 'yes':
+        find_opts.append('-L')
+    elif follow_symlinks == 'no':
+        find_opts.append('-H')
+    else:
+        raise ValueError(f"find()'s follow_symlinks must be one of 'never', 'yes', or 'no' (default: 'never'), but {follow_symlinks} is given.")
+
+    find_opts += [root]
 
     if depth is not None:
         find_opts.extend(['-maxdepth', depth])
@@ -141,9 +153,10 @@ def find(root: str,
          exclude_dir: Union[str, List[str]] = None,
          iter: bool = False,
          iter_nonblock: bool = False,
+         follow_symlinks: str = 'never',
          ) -> any:
     ret = __find(root=root, name=name, type=type, depth=depth, exclude_dir=exclude_dir,
-                 iter_nonblock=iter_nonblock)
+                 iter_nonblock=iter_nonblock, follow_symlinks=follow_symlinks)
     if iter or iter_nonblock:
         return ret
     else:
