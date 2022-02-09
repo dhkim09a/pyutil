@@ -94,5 +94,5 @@ class LinuxDiskImage(Mountable):
             return False
         return (
             bool(re.search(r'^Linux[^,]*filesystem data', file_cmd_out))
-            or bool(re.search(r'\bFAT\b', file_cmd_out))
+            or bool(re.search(r'\b(FAT|FAT32)\b', file_cmd_out))
         )

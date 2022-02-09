@@ -119,6 +119,18 @@ class SubcommandParser(argparse.ArgumentParser):
 
         return super().add_argument(*args, **kwargs)
 
+    def add_argument_group(self, *args, shared: bool = False, **kwargs):
+        if shared:
+            if not self.shared_parser:
+                self.shared_parser = argparse.ArgumentParser(add_help=False)
+
+            # for myself
+            super().add_argument_group(*args, **kwargs)
+            # for my children
+            return self.shared_parser.add_argument_group(*args, **kwargs)
+
+        return super().add_argument_group(*args, **kwargs)
+
 
 class Subcommand:
     parser: SubcommandParser

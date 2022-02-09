@@ -9,8 +9,8 @@ from typing import Union, List
 import sh
 
 
-def __build(build_context, fg=False, dockerfile_cmds_to_append: list = None, drop_priv=False, kvm=False):
-    with open(_p.join(build_context, 'Dockerfile'), 'r') as f:
+def __build(build_context, dockerfile, fg=False, dockerfile_cmds_to_append: list = None, drop_priv=False, kvm=False):
+    with open(_p.join(build_context, dockerfile), 'r') as f:
         dockerfile = f.read()
 
     if dockerfile_cmds_to_append:
@@ -72,6 +72,7 @@ def __build(build_context, fg=False, dockerfile_cmds_to_append: list = None, dro
                         _cwd=build_context,
                         _err_to_out=bool(fg),
                         _out=sys.stdout if bool(fg) else None,
+                        _env={'DOCKER_BUILDKIT': '1'},
                         )
     except sh.ErrorReturnCode as e:
         raise Exception(f'Failed to build a docker image with build context at {build_context}.\n'
@@ -99,6 +100,7 @@ def docker_sh(
         kvm: bool = False,
         xforwarding: bool = False,
         net: str = 'bridge',
+        dockerfile: str = 'Dockerfile',
         _cwd: str = None,
 ) -> sh.Command:
 
@@ -110,7 +112,7 @@ def docker_sh(
 
     if verbose:
         print('Building a docker image...')
-    image_id = __build(docker_context, fg=verbose, drop_priv=not root, kvm=kvm,
+    image_id = __build(docker_context, dockerfile, fg=verbose, drop_priv=not root, kvm=kvm,
                        dockerfile_cmds_to_append=dockerfile_cmds_to_append)
     if not image_id:
         raise Exception('failed to build image')
@@ -136,16 +138,17 @@ def docker_sh(
         raise Exception
 
     if xforwarding:
-        # run_opts.append('-v=/tmp/.X11-unix:/tmp/.X11-unix:rw')
+        docker_run_opts.append('-v=/tmp/.X11-unix:/tmp/.X11-unix:rw')
         docker_run_opts.append(f'-v={_p.join(os.environ["HOME"], ".Xauthority")}:{_p.join(home, ".Xauthority")}')
         docker_run_opts.append(f'-eDISPLAY={os.environ["DISPLAY"]}')
+        docker_run_opts.append(f'--privileged')
         net = 'host'
 
     if kvm:
         docker_run_opts.append('--device=/dev/kvm')
         docker_run_opts.append('--group-add=kvm')
-        # run_opts.append(f'-v=/etc/machine-id:/etc/machine-id:rw')
-        # run_opts.append(f'-eQEMU_AUDIO_DRV=none')
+        docker_run_opts.append(f'-v=/etc/machine-id:/etc/machine-id:rw')
+        # docker_run_opts.append(f'-eQEMU_AUDIO_DRV=none')
 
     docker_run_opts.append(f'--net={net}')
 
@@ -155,6 +158,7 @@ def docker_sh(
         i=True,
         rm=bool(auto_remove),  # Automatically remove the container when it exits
         workdir=_p.realpath(_cwd) if _cwd else home,
+        gpus='all',
     )
 
     return run.bake(image_id)

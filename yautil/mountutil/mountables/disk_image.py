@@ -63,10 +63,11 @@ class DiskImage(Mountable):
 
         self.__partitions = []
         for start, size, type in self.__iter_partitions():
-            if not type.startswith('Linux'):
-                raise NotImplementedError('only Linux filesystem partitions are supported for now')
-            self.__partitions.append(
-                LinuxDiskImage(self.name, offset=start, lomode='udisksctl' if self.__in_qcow2 else 'mount')
-            )
+            if type in ['Linux filesystem', 'W95 FAT32']:
+                partition = LinuxDiskImage(self.name, offset=start, lomode='udisksctl' if self.__in_qcow2 else 'mount')
+            else:
+                partition = None
+                # raise NotImplementedError('only Linux filesystem partitions are supported for now')
+            self.__partitions.append(partition)
 
         return self.__partitions
