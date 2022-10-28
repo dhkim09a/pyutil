@@ -34,7 +34,10 @@ def highlight_str(string: str, start: int, end: int):
     return hl_str
 
 
-def auto_print(string: str, **kwargs):
+def auto_print(string: str, max_len: int = -1, **kwargs):
+    if max_len >= 0:
+        string = string[:max_len]
+
     if os.fstat(0) == os.fstat(1):
         print(string, **kwargs)
     else:

@@ -77,7 +77,7 @@ def __find(root: str,
            exclude_dir: Union[str, List[str]] = None,
            iter_nonblock: bool = False,
            follow_symlinks: str = 'never',
-           ) -> any:
+           ):
 
     find_opts = []
     find_target_opts = []
@@ -154,7 +154,7 @@ def find(root: str,
          iter: bool = False,
          iter_nonblock: bool = False,
          follow_symlinks: str = 'never',
-         ) -> any:
+         ):
     ret = __find(root=root, name=name, type=type, depth=depth, exclude_dir=exclude_dir,
                  iter_nonblock=iter_nonblock, follow_symlinks=follow_symlinks)
     if iter or iter_nonblock:

@@ -1,11 +1,12 @@
 from enum import Enum
 
 from .core import Mountable, Archive
-from .mountables import LinuxDiskImage, QemuQcow2Image, Yaffs2Archive, CpioArchive, Qcow2Image
+from .mountables import LinuxDiskImage, QemuQcow2Image, Yaffs2Archive, CpioArchive, Qcow2Image, DiskImage
 
 
 class MountableType(Enum):
     AUTO = Mountable
+    DISK_IMAGE = DiskImage
     LINUX_DISK_IMAGE = LinuxDiskImage
     QEMU_QCOW2_IMAGE = QemuQcow2Image
     QCOW2_IMAGE = Qcow2Image
