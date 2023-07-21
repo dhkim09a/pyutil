@@ -3,7 +3,7 @@ import os
 import sys
 import tempfile
 from os import path as _p
-from typing import Union, List
+from typing import Literal, Union, List
 # from deprecation import deprecated
 
 import sh
@@ -12,9 +12,6 @@ import sh
 def __build(build_context, dockerfile, fg=False, dockerfile_cmds_to_append: list = None, drop_priv=False, kvm=False):
     with open(_p.join(build_context, dockerfile), 'r') as f:
         dockerfile = f.read()
-
-    if dockerfile_cmds_to_append:
-        dockerfile += '\n{cmds}\n'.format(cmds='\n'.join(dockerfile_cmds_to_append))
 
     if kvm:
         import grp
@@ -56,6 +53,14 @@ def __build(build_context, dockerfile, fg=False, dockerfile_cmds_to_append: list
             f'ENV HOME={home}'
             f'\n'
             f'ENV USER={username}'
+            f'\n'
+        )
+
+    if dockerfile_cmds_to_append:
+        dockerfile += '\n{cmds}\n'.format(cmds='\n'.join(dockerfile_cmds_to_append))
+
+    if drop_priv:
+        dockerfile += (
             f'\n'
             f'USER {uid}:{gid}'
             f'\n'
@@ -101,6 +106,7 @@ def docker_sh(
         xforwarding: bool = False,
         net: str = 'bridge',
         dockerfile: str = 'Dockerfile',
+        gpus: Union[str, Literal['all', False]] = False,
         _cwd: str = None,
 ) -> sh.Command:
 
@@ -158,7 +164,7 @@ def docker_sh(
         i=True,
         rm=bool(auto_remove),  # Automatically remove the container when it exits
         workdir=_p.realpath(_cwd) if _cwd else home,
-        gpus='all',
+        gpus=gpus,
     )
 
     return run.bake(image_id)
