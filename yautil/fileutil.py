@@ -5,7 +5,7 @@ import subprocess
 import sys
 import tempfile
 from os import path as _p
-from typing import Union, List
+from typing import Iterable, Union, Optional, Literal
 
 import sh
 
@@ -71,13 +71,13 @@ def check_ignored(path, ignored_dirs):
 
 
 def __find(root: str,
-           name: Union[str, List[str]] = None,
-           type: str = None,
-           depth: int = None,
-           exclude_dir: Union[str, List[str]] = None,
+           name: Union[str, list[str], None] = None,
+           type: Optional[str] = None,
+           depth: Optional[int] = None,
+           exclude_dir: Union[str, list[str], None] = None,
            iter_nonblock: bool = False,
            follow_symlinks: str = 'never',
-           ):
+           ) -> Iterable[str]:
 
     find_opts = []
     find_target_opts = []
@@ -145,16 +145,18 @@ def __find(root: str,
         if path:
             yield str(path).strip()
 
+    # return []
+
 
 def find(root: str,
-         name: str = None,
-         type: str = None,
-         depth: int = None,
-         exclude_dir: Union[str, List[str]] = None,
+         name: Union[str, list[str], None] = None,
+         type: Optional[str] = None,
+         depth: Optional[int] = None,
+         exclude_dir: Union[str, list[str], None] = None,
          iter: bool = False,
          iter_nonblock: bool = False,
          follow_symlinks: str = 'never',
-         ):
+         ) -> Iterable[str]:
     ret = __find(root=root, name=name, type=type, depth=depth, exclude_dir=exclude_dir,
                  iter_nonblock=iter_nonblock, follow_symlinks=follow_symlinks)
     if iter or iter_nonblock:
@@ -163,17 +165,25 @@ def find(root: str,
         return [*ret]
 
 
-def find_recursive(root: str, name_patterns: list = None, ignored_dirs=None, type='any', depth=-1, sort=False):
+def find_recursive(root: str,
+                   name_patterns: Optional[list[str]] = None,
+                   ignored_dirs: Union[str, list[str], None] = None,
+                   type: Literal['any', 'dir', 'file'] = 'any',
+                   depth=-1,
+                   sort=False,
+                   ) -> list[str]:
     if sys.platform == "darwin" or sys.platform.startswith('linux'):
         # return find_recursive_unix(root, name_patterns=name_patterns, ignored_dirs=ignored_dirs, type=type, depth=depth, sort=sort)
-        paths = find(root,
+        paths: list[str] = list(find(root,
                      name=name_patterns,
                      type='d' if type == 'dir' else 'f' if type == 'file' else None,
                      depth=depth if depth >= 0 else None,
-                     exclude_dir=ignored_dirs)
-        return paths.sort() if sort else paths
+                     exclude_dir=ignored_dirs))
+        if sort:
+            paths.sort()
+        return paths
     else:
-        paths = []
+        paths: list[str] = []
         for root, dirs, fnames in os.walk(root):
             if ignored_dirs and check_ignored(root, ignored_dirs):
                 continue
