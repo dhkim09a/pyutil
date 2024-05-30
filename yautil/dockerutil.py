@@ -162,6 +162,7 @@ def docker_sh(
         *docker_run_opts,
         '-d=false',
         i=True,
+        t=True,
         rm=bool(auto_remove),  # Automatically remove the container when it exits
         workdir=_p.realpath(_cwd) if _cwd else home,
         gpus=gpus,
