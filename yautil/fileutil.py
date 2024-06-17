@@ -24,7 +24,7 @@ def remove_contents(folder: str):
             print('Failed to delete %s. Reason: %s' % (file_path, e))
 
 
-def find_recursive_unix(root: str, name_patterns: list =None, ignored_dirs=None, type='any', depth=-1, sort=False):
+def find_recursive_unix(root: str, name_patterns: Optional[list] = None, ignored_dirs=None, type='any', depth=-1, sort=False):
     # find . -type d \( -path dir1 -o -path dir2 -o -path dir3 \) -prune -o -print
     find_cmd = 'find ' + root + ' '
     find_filter = ''
@@ -75,6 +75,7 @@ def __find(root: str,
            type: Optional[str] = None,
            depth: Optional[int] = None,
            exclude_dir: Union[str, list[str], None] = None,
+           printf: Union[str, Literal[False]] = False,
            iter_nonblock: bool = False,
            follow_symlinks: str = 'never',
            ) -> Iterable[str]:
@@ -123,29 +124,29 @@ def __find(root: str,
     else:
         find_opts.extend(find_target_opts)
 
+    if printf:
+        find_opts.extend(['-printf', printf])
+
     # print(find_opts)
     # if rd := get_memtmpdir():
     rd = get_memtmpdir()
-    if rd:
+    if rd and not iter_nonblock:
+        # print(f'rd: {rd}')
         find_outs = _p.join(rd.name, 'f')
-        sh.find(*find_opts, _out=find_outs)
+        sh.find(*find_opts, _out=find_outs) # type: ignore
 
-        def get_paths():
-            with open(find_outs, 'r') as f:
-                # while line := f.readline():
-                while True:
-                    line = f.readline()
-                    if not line:
-                        break
-                    yield line
+        with open(find_outs, 'r') as f:
+            # while line := f.readline():
+            while True:
+                line = f.readline()
+                if not line:
+                    break
+                yield line.strip()
     else:
-        get_paths = sh.find.bake(*find_opts, _iter_noblock=iter_nonblock, _iter=True)
-
-    for path in get_paths():
-        if path:
+        for path in sh.find(*find_opts, _iter_noblock=iter_nonblock, _iter=True): # type: ignore
+            if not path:
+                continue
             yield str(path).strip()
-
-    # return []
 
 
 def find(root: str,
@@ -153,12 +154,21 @@ def find(root: str,
          type: Optional[str] = None,
          depth: Optional[int] = None,
          exclude_dir: Union[str, list[str], None] = None,
+         printf: Union[str, Literal[False]] = False,
          iter: bool = False,
          iter_nonblock: bool = False,
          follow_symlinks: str = 'never',
          ) -> Iterable[str]:
-    ret = __find(root=root, name=name, type=type, depth=depth, exclude_dir=exclude_dir,
-                 iter_nonblock=iter_nonblock, follow_symlinks=follow_symlinks)
+    ret = __find(
+        root=root,
+        name=name,
+        type=type,
+        depth=depth,
+        exclude_dir=exclude_dir,
+        printf=printf,
+        iter_nonblock=iter_nonblock,
+        follow_symlinks=follow_symlinks,
+    )
     if iter or iter_nonblock:
         return ret
     else:
@@ -198,8 +208,8 @@ def find_recursive(root: str,
         return paths
 
 
-@static_vars(mkdir=sh.mkdir.bake(p=True),
-             rsync=sh.rsync.bake(a=True, partial=True, delete=True))
+@static_vars(mkdir=sh.mkdir.bake(p=True), # type: ignore
+             rsync=sh.rsync.bake(a=True, partial=True, delete=True)) # type: ignore
 def overwrite(src: str, dst: str):
     if os.path.isdir(src):
         src = src + os.path.sep
