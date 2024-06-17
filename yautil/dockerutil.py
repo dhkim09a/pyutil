@@ -3,13 +3,20 @@ import os
 import sys
 import tempfile
 from os import path as _p
-from typing import Literal, Union, List
+from typing import Literal, Union, List, Optional
 # from deprecation import deprecated
 
 import sh
 
 
-def __build(build_context, dockerfile, fg=False, dockerfile_cmds_to_append: list = None, drop_priv=False, kvm=False):
+def __build(build_context,
+            dockerfile,
+            fg=False,
+            dockerfile_cmds_to_append: list = None,
+            drop_priv=False,
+            kvm=False,
+            builder: Optional[str] = None,
+            ):
     with open(_p.join(build_context, dockerfile), 'r') as f:
         dockerfile = f.read()
 
@@ -73,11 +80,16 @@ def __build(build_context, dockerfile, fg=False, dockerfile_cmds_to_append: list
         sh.docker.build('.',
                         f='-',
                         iidfile=iidfile,
+                        builder=builder if builder else False,
+                        network='host',
                         _in=dockerfile,
                         _cwd=build_context,
                         _err_to_out=bool(fg),
                         _out=sys.stdout if bool(fg) else None,
-                        _env={'DOCKER_BUILDKIT': '1'},
+                        _env={
+                            'DOCKER_BUILDKIT': '1',
+                            'PATH': os.environ['PATH'],
+                        },
                         )
     except sh.ErrorReturnCode as e:
         raise Exception(f'Failed to build a docker image with build context at {build_context}.\n'
@@ -107,6 +119,7 @@ def docker_sh(
         net: str = 'bridge',
         dockerfile: str = 'Dockerfile',
         gpus: Union[str, Literal['all', False]] = False,
+        builder: Optional[str] = None,
         _cwd: str = None,
 ) -> sh.Command:
 
@@ -119,7 +132,7 @@ def docker_sh(
     if verbose:
         print('Building a docker image...')
     image_id = __build(docker_context, dockerfile, fg=verbose, drop_priv=not root, kvm=kvm,
-                       dockerfile_cmds_to_append=dockerfile_cmds_to_append)
+                       dockerfile_cmds_to_append=dockerfile_cmds_to_append, builder=builder)
     if not image_id:
         raise Exception('failed to build image')
 
