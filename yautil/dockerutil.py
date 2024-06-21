@@ -1,5 +1,6 @@
 import getpass
 import os
+import re
 import sys
 import tempfile
 from os import path as _p
@@ -7,6 +8,10 @@ from typing import Literal, Union, List, Optional
 # from deprecation import deprecated
 
 import sh
+
+
+class AuthorizationError(Exception):
+    pass
 
 
 def __build(build_context,
@@ -84,23 +89,32 @@ def __build(build_context,
                         network='host',
                         _in=dockerfile,
                         _cwd=build_context,
-                        _err_to_out=bool(fg),
-                        _out=sys.stdout if bool(fg) else None,
+                        # _err_to_out=bool(fg),
+                        _err_to_out=True,
+                        _out=sys.stderr if bool(fg) else None,
+                        # _err=sys.stderr if bool(fg) else None,
+                        _tee='out',
                         _env={
                             'DOCKER_BUILDKIT': '1',
                             'PATH': os.environ['PATH'],
                         },
                         )
     except sh.ErrorReturnCode as e:
-        raise Exception(f'Failed to build a docker image with build context at {build_context}.\n'
-                        f'STDOUT:\n'
-                        f'{bytes(e.stdout).decode(sh.DEFAULT_ENCODING)}'
-                        f'\n'
-                        f'STDERR:\n'
-                        f'{bytes(e.stderr).decode(sh.DEFAULT_ENCODING)}'
-                        )
-    except Exception:
-        raise Exception(f'failed to build a docker image with build context at {build_context}.')
+        sout = bytes(e.stdout).decode(sh.DEFAULT_ENCODING)
+
+        m = re.search(r'^ERROR: (?P<msg>.*)$', sout, re.M)
+
+        if m and (msg := m.groupdict().get('msg', None)):
+            if 'failed to authorize' in msg:
+                raise AuthorizationError(msg)
+
+        raise Exception(
+            f'Failed to build a docker image with build context at {build_context}. ({e.exit_code})\n'
+            f'---\n'
+            f'{sout}'
+        )
+    except Exception as e:
+        raise Exception(f'Internal docker build error: {e}')
 
     with open(iidfile, 'r') as f:
         return f.read()
