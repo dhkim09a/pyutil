@@ -76,8 +76,10 @@ def __find(root: str,
            depth: Optional[int] = None,
            exclude_dir: Union[str, list[str], None] = None,
            printf: Union[str, Literal[False]] = False,
-           iter_nonblock: bool = False,
+           iter: bool = False,
+        #    iter_nonblock: bool = False,
            follow_symlinks: str = 'never',
+           bufsize: int = 0,
            ) -> Iterable[str]:
 
     find_opts = []
@@ -128,9 +130,9 @@ def __find(root: str,
         find_opts.extend(['-printf', printf])
 
     # print(find_opts)
-    # if rd := get_memtmpdir():
-    rd = get_memtmpdir()
-    if rd and not iter_nonblock:
+
+    # if not (iter_nonblock or iter) and (rd := get_memtmpdir()):
+    if not iter and (rd := get_memtmpdir()):
         # print(f'rd: {rd}')
         find_outs = _p.join(rd.name, 'f')
         sh.find(*find_opts, _out=find_outs) # type: ignore
@@ -142,8 +144,29 @@ def __find(root: str,
                 if not line:
                     break
                 yield line.strip()
+    elif bufsize > 1:
+        remainings: str = ''
+        # for path in sh.find(*find_opts, _iter_noblock=iter_nonblock, _iter=iter, _out_bufsize=bufsize): # type: ignore
+        for path in sh.find(*find_opts, _iter=iter, _out_bufsize=bufsize): # type: ignore
+            if not path:
+                continue
+            lines = str(path).split('\n')
+            for line in lines[:-1]:
+                if remainings:
+                    # print(remainings + line)
+                    yield(remainings + line)
+                    remainings = ''
+                else:
+                    # print(line)
+                    yield(line)
+            if lines[-1]:
+                remainings += lines[-1]
+        if remainings:
+            # print(remainings)
+            yield(remainings)
     else:
-        for path in sh.find(*find_opts, _iter_noblock=iter_nonblock, _iter=True): # type: ignore
+        # for path in sh.find(*find_opts, _iter_noblock=iter_nonblock, _iter=iter): # type: ignore
+        for path in sh.find(*find_opts, _iter=iter): # type: ignore
             if not path:
                 continue
             yield str(path).strip()
@@ -156,8 +179,9 @@ def find(root: str,
          exclude_dir: Union[str, list[str], None] = None,
          printf: Union[str, Literal[False]] = False,
          iter: bool = False,
-         iter_nonblock: bool = False,
+        #  iter_nonblock: bool = False,
          follow_symlinks: str = 'never',
+         bufsize: int = 0,
          ) -> Iterable[str]:
     ret = __find(
         root=root,
@@ -166,10 +190,13 @@ def find(root: str,
         depth=depth,
         exclude_dir=exclude_dir,
         printf=printf,
-        iter_nonblock=iter_nonblock,
+        iter=iter,
+        # iter_nonblock=iter_nonblock,
         follow_symlinks=follow_symlinks,
+        bufsize=bufsize,
     )
-    if iter or iter_nonblock:
+    # if iter or iter_nonblock:
+    if iter:
         return ret
     else:
         return [*ret]
