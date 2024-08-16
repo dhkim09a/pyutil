@@ -28,16 +28,14 @@ def tryimport(name, globals={}, locals={}, fromlist=[], level=-1):
 
 realimport, builtins.__import__ = builtins.__import__, tryimport
 
-from .mputil import MpUtil, globalize
-from .subcommand import Subcommand, SubcommandParser
-from .fileutil import remove_contents, find_recursive, overwrite, get_memtmpdir, find
+from .file import remove_contents, find_recursive, overwrite, get_memtmpdir, find
 from .decorators import static_vars
-from .eventutil import EventGenerator, Event
-from .strutil import decomment_cxx, strcompare
-from .plotutil import plot_cdf, plot_linear, plot_scatter, plot_box, plot_stack
-from .cacheutil import PersistentCache
-from .dockerutil import docker_sh
-from .gitutil import git_expand
-from .pyshutil import compile_shargs
+from .event import EventGenerator, Event
+from .print import decomment_cxx, strcompare
+from .plot import plot_cdf, plot_linear, plot_scatter, plot_box, plot_stack
+from .persistent_cache import PersistentCache
+from .docker_sh import docker_sh
+from .git import git_expand
+from .pysh import compile_shargs
 
 builtins.__import__ = realimport

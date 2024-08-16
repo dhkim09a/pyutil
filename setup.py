@@ -20,13 +20,13 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="yautil", # Replace with your own username
-    version="0.0.66",
+    version="0.0.67",
     author="Donghwi Kim",
-    author_email="dhkim09@kaist.ac.kr",
+    author_email="dh.tony.kim@samsung.com",
     description="Yet Another Python util.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/dhkim09a/pyutil",
+    url="https://github.sec.samsung.net/dh-tony-kim/pyutil",
     packages=setuptools.find_packages(),
     # classifiers=[
     #     "Programming Language :: Python :: 3",
@@ -38,5 +38,5 @@ setuptools.setup(
         'test': deps,
     },
     package_data={'': package_files('yautil/mountutil/yaffs2utils-0.2.9')},
-    python_requires='>=3.7',
+    python_requires='>=3.11',
 )

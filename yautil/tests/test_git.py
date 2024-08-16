@@ -5,7 +5,7 @@ from unittest import TestCase
 
 import sh
 
-from ..gitutil import git_expand
+from ..git import git_expand
 from tempfile import TemporaryDirectory
 
 
