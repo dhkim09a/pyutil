@@ -22,9 +22,9 @@ def compile_shargs(*args, **kwargs) -> Tuple[list, dict]:
 def source(path: str, cmd=None, _cwd='.', _env=os.environ) -> dict:
     ret = {}
     if cmd is None:
-        envs = sh.bash('-c', 'source ' + path + ' >/dev/null && env', _cwd=_cwd, _env=_env)
+        envs = sh.bash('-c', 'source ' + path + ' >/dev/null && env', _cwd=_cwd, _env=_env) # type: ignore
     else:
-        envs = sh.bash('-c', 'source ' + path + ' >/dev/null && ' + cmd + ' >/dev/null && env', _cwd=_cwd, _env=_env)
+        envs = sh.bash('-c', 'source ' + path + ' >/dev/null && ' + cmd + ' >/dev/null && env', _cwd=_cwd, _env=_env) # type: ignore
     for env in envs.splitlines():
         env: str
         var, val = env.split('=', 1)

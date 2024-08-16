@@ -26,7 +26,7 @@ class TestGit(TestCase):
     def test_expand(self):
         test_repo_bkup = _p.join(self.tmpdir.name, 'hello-git-repo.bkup')
 
-        sh.cp(self.test_repo, test_repo_bkup, r=True)
+        sh.cp(self.test_repo, test_repo_bkup, r=True) # type: ignore
 
         git_expand(self.test_repo, self.tmpdir.name, 'branch-A', 'branch-B', 'branch-C')
 
@@ -39,4 +39,4 @@ class TestGit(TestCase):
         with open(_p.join(self.tmpdir.name, 'branch-C', 'C'), 'r') as f:
             assert f.read() == 'C'
 
-        assert not str(sh.diff(self.test_repo, test_repo_bkup, r=True))
+        assert not str(sh.diff(self.test_repo, test_repo_bkup, r=True)) # type: ignore

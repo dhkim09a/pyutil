@@ -1,5 +1,5 @@
 import re
-from typing import Union, List
+from typing import Union
 
 import sh
 
@@ -8,7 +8,7 @@ from .linux_disk_image import LinuxDiskImage
 
 
 class DiskImage(Mountable):
-    __partitions: List[Mountable] = None
+    __partitions: list[Mountable | None] | None = None
     __in_qcow2: bool = False
 
     def __init__(self, file: str, in_qcow2: bool = False):
@@ -16,7 +16,7 @@ class DiskImage(Mountable):
         self.__in_qcow2 = in_qcow2
 
     def __iter_partitions(self):
-        rc = sh.fdisk(self.name, l=True, o='Start,End,Sectors,Type', color='never', _iter=True)
+        rc = str(sh.fdisk(self.name, l=True, o='Start,End,Sectors,Type', color='never', _iter=True)) # type: ignore
         sector_size = 512
 
         for line in rc:
@@ -51,14 +51,14 @@ class DiskImage(Mountable):
         assert False
 
     @classmethod
-    def _ismountable(cls, path: str = None, file_cmd_out: str = None) -> bool:
+    def _ismountable(cls, path: str | None = None, file_cmd_out: str | None = None) -> bool:
         if file_cmd_out is None:
             return False
         return r'boot sector' in file_cmd_out
 
     @property
-    def partitions(self) -> Union[List[Mountable], None]:
-        if self.__partitions:
+    def partitions(self) -> Union[list[Mountable | None], None]:
+        if self.__partitions is None:
             return self.__partitions
 
         self.__partitions = []

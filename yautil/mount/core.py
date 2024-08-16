@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import re
 import shutil
@@ -29,18 +31,19 @@ def _empty_dir(dir: str):
 
 
 class MountPoint:
-    __mountable: None
+    __mountable: Mountable
     __mode: str
     __mount_point: str
     __tmpdir: TemporaryDirectory
 
-    def __init__(self, mountable, mode: str, mount_point: str):
+    def __init__(self, mountable: Mountable, mode: str, mount_point: str | None):
         self.__mountable = mountable
         self.__mode = mode
 
         if not mount_point:
             self.__tmpdir = TemporaryDirectory(prefix='yautil-mountutil-')
             mount_point = self.__tmpdir.name
+            assert isinstance(mount_point, str)
 
         self.__mount_point = mount_point
 
@@ -81,7 +84,7 @@ class Mountable:
                 raise FileNotFoundError(file)
 
             if not (cls := self.__resolve_cls(file)):
-                raise Exception('unsupported file type ' + file + ' ' + str(sh.file(file)))
+                raise Exception('unsupported file type ' + file + ' ' + str(sh.file(file))) # type: ignore
             self.__class__ = cls
             self.__init__(file, **kwargs)
 
@@ -97,7 +100,7 @@ class Mountable:
         raise NotImplementedError
 
     @classmethod
-    def _ismountable(cls, path: str = None, file_cmd_out: str = None) -> bool:
+    def _ismountable(cls, path: str | None = None, file_cmd_out: str | None = None) -> bool:
         raise NotImplementedError
 
     @property
@@ -112,7 +115,7 @@ class Mountable:
     def __resolve_cls(cls, file: str):
         from .types import MountableType
 
-        desc = str(sh.file(file, brief=True)).strip()
+        desc = str(sh.file(file, brief=True)).strip() # type: ignore
 
         for typ in MountableType:
             if typ == MountableType.AUTO:

@@ -28,14 +28,17 @@ def tryimport(name, globals={}, locals={}, fromlist=[], level=-1):
 
 realimport, builtins.__import__ = builtins.__import__, tryimport
 
+from .argparse import WarningAction
 from .file import remove_contents, find_recursive, overwrite, get_memtmpdir, find
 from .decorators import static_vars
 from .event import EventGenerator, Event
-from .print import decomment_cxx, strcompare
+from .print import decomment_cxx, strcompare, auto_print
 from .plot import plot_cdf, plot_linear, plot_scatter, plot_box, plot_stack
+from .lru_cache_ext import lru_cache
 from .persistent_cache import PersistentCache
-from .docker_sh import docker_sh
+from .docker_sh import docker_sh, AuthorizationError
 from .git import git_expand
-from .pysh import compile_shargs
+from .io import FilteredTextIO
+from .pysh import compile_shargs, get_cmd_args
 
 builtins.__import__ = realimport

@@ -7,13 +7,13 @@ from os import path as _p
 
 import sh
 
-from yautil.mountutil.core import Mountable
-from yautil.mountutil.block_dev_handle import BlockDevHandle
+from yautil.mount.core import Mountable
+from yautil.mount.block_dev_handle import BlockDevHandle
 
 
 class QemuNbdHandle(BlockDevHandle):
     __img: str
-    __dev: str = None
+    __dev: str | None = None
     __load_nbd = False
 
     def __init__(self, img: str):
@@ -21,7 +21,7 @@ class QemuNbdHandle(BlockDevHandle):
 
     def find_free_nbd_dev(self):
         nbd_dev_avail = None
-        modules, sizes, deps = zip(*[l.split(maxsplit=2) for l in str(sh.lsmod()).splitlines()])
+        modules, sizes, deps = zip(*[l.split(maxsplit=2) for l in str(sh.lsmod()).splitlines()]) # type: ignore
 
         if 'nbd' not in modules:
             sh.sudo.modprobe('nbd', 'max_part=8', _fg=True)
@@ -43,7 +43,7 @@ class QemuNbdHandle(BlockDevHandle):
 
         return f'/dev/{nbd_dev_avail}'
 
-    def map(self) -> str:
+    def map(self) -> str | None:
         if self.base_dev:
             return self.base_dev
 
@@ -52,9 +52,9 @@ class QemuNbdHandle(BlockDevHandle):
         assert dev
 
         try:
-            sh.sudo('qemu-nbd', '--connect', dev, '-f', 'qcow2', self.__img, _fg=True)
+            sh.sudo('qemu-nbd', '--connect', dev, '-f', 'qcow2', self.__img, _fg=True) # type: ignore
             time.sleep(1)
-        except sh.ErrorReturnCode_1:
+        except sh.ErrorReturnCode_1: # type: ignore
             raise Exception(f'failed to open {self.__img}')
 
         self.__dev = dev
@@ -63,15 +63,15 @@ class QemuNbdHandle(BlockDevHandle):
 
     def unmap(self):
         if self.__dev:
-            sh.sudo('qemu-nbd', '--disconnect', self.__dev, _fg=True)
+            sh.sudo('qemu-nbd', '--disconnect', self.__dev, _fg=True) # type: ignore
             self.__dev = None
 
     @property
-    def base_dev(self) -> str:
+    def base_dev(self) -> str | None:
         return self.__dev
 
     @property
-    def devs(self) -> List[str]:
+    def devs(self) -> list[str]:
         return [*filter(lambda d: re.search(fr'{self.base_dev}[a-zA-Z]', d), glob.glob('/dev/*'))]
 
     def __del__(self):
@@ -79,11 +79,11 @@ class QemuNbdHandle(BlockDevHandle):
 
 
 class QemuQcow2Image(Mountable):
-    __nbd_ctx_: QemuNbdHandle = None
-    __dev: str = None
-    __partitions: List[Mountable] = None
+    __nbd_ctx_: QemuNbdHandle | None = None
+    __dev: str | None = None
+    __partitions: list[Mountable] | None = None
 
-    def __init__(self, file: str, dev: str = None):
+    def __init__(self, file: str, dev: str | None = None):
         super().__init__(file)
         self.__dev = dev
 
@@ -96,7 +96,7 @@ class QemuQcow2Image(Mountable):
         sh.sudo.umount(mount_point, _fg=True)
 
     @classmethod
-    def _ismountable(cls, path: str = None, file_cmd_out: str = None) -> bool:
+    def _ismountable(cls, path: str | None = None, file_cmd_out: str | None = None) -> bool:
         if file_cmd_out is None:
             return False
         return bool(re.search(r'^QEMU QCOW2 Image', file_cmd_out))

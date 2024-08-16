@@ -17,7 +17,7 @@ class AuthorizationError(Exception):
 def __build(build_context,
             dockerfile,
             fg=False,
-            dockerfile_cmds_to_append: list = None,
+            dockerfile_cmds_to_append: list[str] | None = None,
             drop_priv=False,
             kvm=False,
             builder: Optional[str] = None,
@@ -82,7 +82,7 @@ def __build(build_context,
 
     iidfile = _p.join(tmpdir.name, '__iid')
     try:
-        sh.docker.build('.',
+        sh.docker.build('.', # type: ignore
                         f='-',
                         iidfile=iidfile,
                         builder=builder if builder else False,
@@ -125,16 +125,16 @@ def docker_sh(
         *docker_run_opts,
         root: bool = False,
         verbose: bool = False,
-        volumes: Union[str, List[str]] = None,
+        volumes: str | list[str] | None = None,
         auto_remove: bool = True,
-        dockerfile_cmds_to_append: list = None,
+        dockerfile_cmds_to_append: list[str] | None = None,
         kvm: bool = False,
         xforwarding: bool = False,
         net: str = 'bridge',
         dockerfile: str = 'Dockerfile',
         gpus: Union[str, Literal['all', False]] = False,
         builder: Optional[str] = None,
-        _cwd: str = None,
+        _cwd: str | None = None,
 ) -> sh.Command:
 
     if (not docker_context) or (not _p.isdir(docker_context)):
@@ -185,7 +185,7 @@ def docker_sh(
 
     docker_run_opts.append(f'--net={net}')
 
-    run = sh.docker.run.bake(
+    run = sh.docker.run.bake( # type: ignore
         *docker_run_opts,
         '-d=false',
         i=True,

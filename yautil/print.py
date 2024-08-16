@@ -44,7 +44,7 @@ def auto_print(string: str, max_len: int = -1, **kwargs):
         print(re.sub(r'\033\[[0-9,;]*[m,K]', '', string), **kwargs)
 
 
-def strcompare(left: str, right: str, width: int = None, highlight: bool = True) -> str:
+def strcompare(left: str, right: str, width: int = -1, highlight: bool = True) -> str:
     def __compose_line(ll: str, rl: str, padding: int):
         return str('{:' + str(len(str(ll)) + padding) + '} | {}').format(str(ll), str(rl)) + '\n'
 
@@ -55,7 +55,7 @@ def strcompare(left: str, right: str, width: int = None, highlight: bool = True)
     color_red = color_fmt.format(31)  # red
     color_clr = color_fmt.format(0)
 
-    if not width:
+    if width < 0:
         width = max([len(e) for e in lls])
 
     diff = ""

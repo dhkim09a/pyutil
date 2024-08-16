@@ -7,8 +7,8 @@ from ..udisksctl import udisksctl, udisksctl_losetup, udisksctl_mount
 
 
 class UDisksCtlCtx:
-    __dev: str = None
-    __mount_point: str = None
+    __dev: str | None = None
+    __mount_point: str | None = None
 
     def mount(self, image: str):
         self.__dev = udisksctl_losetup(image)
@@ -29,7 +29,7 @@ class LinuxDiskImage(Mountable):
     __offset: int
     __lomode: str = 'mount'
     __mntmode: str = 'mount'
-    __dev: str = None
+    __dev: str | None = None
 
     def __init__(self, file: str, offset=0, lomode='mount', mntmode='mount'):
         super().__init__(file)
@@ -51,7 +51,7 @@ class LinuxDiskImage(Mountable):
             sh.sudo.mount(file, mount_point, o=f'offset={self.__offset}', _fg=True)
             return
         elif self.__lomode == 'losetup':
-            self.__dev = str(sh.losetup(f=True))
+            self.__dev = str(sh.losetup(f=True)) # type: ignore
             sh.sudo.losetup(self.__dev, file, _fg=True)
         elif self.__lomode == 'udisksctl':
             self.__dev = udisksctl_losetup(file)
@@ -89,7 +89,7 @@ class LinuxDiskImage(Mountable):
             udisksctl('loop-delete', b=self.__dev)
 
     @classmethod
-    def _ismountable(cls, path: str = None, file_cmd_out: str = None) -> bool:
+    def _ismountable(cls, path: str | None = None, file_cmd_out: str | None = None) -> bool:
         if file_cmd_out is None:
             return False
         return (

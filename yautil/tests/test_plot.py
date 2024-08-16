@@ -1,3 +1,4 @@
+from typing import Callable
 from unittest import TestCase, SkipTest
 
 import yautil
@@ -5,7 +6,7 @@ import matplotlib.pyplot as plt
 
 
 class TestPlot(TestCase):
-    plot: callable
+    plot: Callable
     pause = .001
 
     @classmethod

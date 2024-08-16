@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 from typing import List
 from unittest import TestCase, SkipTest
 
-from ..mountutil import mount, extract, archive, MountableType, ArchiveType, DiskImage
+from ..mount import mount, extract, archive, MountableType, ArchiveType, DiskImage
 
 
 class TestMountable(TestCase):
@@ -106,8 +106,10 @@ class TestDiskImage(TestMountable):
         file = _p.join(self.test_dir.name, 'disk.img')
 
         img = DiskImage(file)
+        assert img.partitions
 
         for i, partition in enumerate(img.partitions):
+            assert partition
             with mount(partition) as m:
                 with open(_p.join(m.name, 'hello'), 'r') as f:
                     assert f.read().strip() == 'hello' + str(i + 1)

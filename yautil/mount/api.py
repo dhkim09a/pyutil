@@ -5,7 +5,7 @@ from .core import MountPoint, Mountable
 from .types import MountableType, ArchiveType
 
 
-def mount(file: Union[str, Mountable], mode: str = 'rw', mount_point: str = None, type: MountableType = MountableType.AUTO,
+def mount(file: Union[str, Mountable], mode: str = 'rw', mount_point: str | None = None, type: MountableType = MountableType.AUTO,
           **type_specific_args) -> MountPoint:
 
     if not isinstance(file, Mountable):

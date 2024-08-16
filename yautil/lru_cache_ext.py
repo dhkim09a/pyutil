@@ -1,4 +1,4 @@
-from functools import _CacheInfo, lru_cache
+from functools import _CacheInfo, lru_cache as _lru_cache
 import sys
 from typing import Any, Callable, TypeVar
 from typing_extensions import ParamSpec # type: ignore
@@ -34,10 +34,12 @@ def hash_item(e) -> int:
 PT = ParamSpec("PT")
 RT = TypeVar("RT")
 
-def lru_cache_ext(*opts,
-                  hashfunc: Callable[..., int] = hash_item,
-                  **kwopts,
-                  ) -> Callable[[Callable[PT, RT]], Callable[PT, RT]]:
+def lru_cache(
+        *opts,
+        hashfunc: Callable[..., int] = hash_item,
+        **kwopts,
+    ) -> Callable[[Callable[PT, RT]], Callable[PT, RT]]:
+
     def decorator(func: Callable[PT, RT]) -> Callable[PT, RT]:
         class _lru_cache_ext_wrapper:
             args: tuple
@@ -54,7 +56,7 @@ def lru_cache_ext(*opts,
             #     def cache_parameters() -> _CacheParameters: ...
 
             @classmethod
-            @lru_cache(*opts, **kwopts)
+            @_lru_cache(*opts, **kwopts)
             def cached_func(cls, args_hash: int) -> RT:
                 return func(*cls.args, **cls.kwargs)
 

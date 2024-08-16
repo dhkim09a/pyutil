@@ -2,7 +2,7 @@ import os
 import pickle
 import hashlib
 from pathlib import Path
-from typing import Union
+from typing import Any, Union
 
 DEFAULT_CACHE_DIR = os.path.join(Path.home(), '.cache')
 BUF_SIZE = 65536  # lets read stuff in 64kb chunks!
@@ -10,7 +10,7 @@ BUF_SIZE = 65536  # lets read stuff in 64kb chunks!
 
 class PersistentCache:
     class Key:
-        key: any
+        key: Any
         keytype: str
 
         __hexdigest_value: str
@@ -62,8 +62,8 @@ class PersistentCache:
             return sha1.hexdigest()
 
     class _Entry:
-        key: any
-        value: any
+        key: Any
+        value: Any
 
         def __init__(self, key, value):
             self.key = key
@@ -89,15 +89,15 @@ class PersistentCache:
 
             try:
                 with open(path, 'rb') as f:
-                    e: PersistentCache._Entry = pickle.load(f)
+                    entry: PersistentCache._Entry = pickle.load(f)
                 assert isinstance(e, PersistentCache._Entry)
             except Exception as e:
                 print(e)
                 continue
 
-            self.keys.add(e.key)
+            self.keys.add(entry.key)
 
-    def lookup(self, key: Key) -> any:
+    def lookup(self, key: Key) -> Any:
         if key not in self:
             raise KeyError(key)
 
