@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from typing import Union, List, Tuple, Dict
+from typing import Callable, Mapping, Union
 
 
 class __PlotMode(Enum):
@@ -9,7 +9,7 @@ class __PlotMode(Enum):
     STACK = auto()
 
 
-def __unzip_subplot_data(subplot_data: Tuple) -> (list, list):
+def __unzip_subplot_data(subplot_data: tuple) -> tuple[list, list]:
     labels = []
     lines = []
     for line_data in subplot_data:
@@ -31,21 +31,21 @@ def __unzip_subplot_data(subplot_data: Tuple) -> (list, list):
 
 
 def __plot(*data,
-           titles: Union[str, List[str]] = None,
+           titles: Union[str, list[str]] | None = None,
            maxcol: int = 4,
-           xlabel: str = None,
-           ylabel: str = None,
-           xlim: List = None,
-           ylim: List = None,
+           xlabel: str | None = None,
+           ylabel: str | None = None,
+           xlim: list | None = None,
+           ylim: list | None = None,
            padding: float = 0.2,
            block: bool = True,
-           legend_loc: str = None,
-           font_family: str = None,
+           legend_loc: str | None = None,
+           font_family: str | None = None,
            autofmt_xdate: bool = True,
            # the below are private params
            mode: __PlotMode = __PlotMode.LINEAR,
-           figsize: tuple = None,
-           subplots_adjust: Dict[str, float] = None,
+           figsize: tuple | None = None,
+           subplots_adjust: Mapping[str, float] | None = None,
            errors = None,
            **subplot_kwargs
            ):
@@ -150,7 +150,7 @@ def __plot(*data,
     plt.show(block=block)
 
 
-def __modify_line_data(data, modify_line_data: callable) -> list:
+def __modify_line_data(data, modify_line_data: Callable) -> list:
     modified_data = []
 
     for subplot_data in data:
@@ -183,15 +183,15 @@ def __modify_line_data(data, modify_line_data: callable) -> list:
 
 
 def plot_cdf(*data,
-             titles: Union[str, List[str]] = None,
+             titles: str | list[str] | None = None,
              maxcol: int = 4,
-             xlabel: str = None,
+             xlabel: str | None = None,
              padding: float = 0.2,
              block: bool = True,
-             legend_loc: str = None,
-             font_family: str = None,
-             figsize: tuple = None,
-             subplots_adjust: Dict[str, float] = None,
+             legend_loc: str | None = None,
+             font_family: str | None = None,
+             figsize: tuple | None = None,
+             subplots_adjust: Mapping[str, float] | None = None,
              **subplot_kwargs
              ):
     """
@@ -257,18 +257,18 @@ def plot_cdf(*data,
 
 
 def plot_linear(*data,
-                titles: Union[str, List[str]] = None,
+                titles: str | list[str] | None = None,
                 maxcol: int = 4,
-                xlabel: str = None,
-                ylabel: str = None,
-                xlim: List = None,
-                ylim: List = None,
+                xlabel: str | None = None,
+                ylabel: str | None = None,
+                xlim: list | None = None,
+                ylim: list | None = None,
                 padding: float = 0.2,
                 block: bool = True,
-                legend_loc: str = None,
-                font_family: str = None,
-                figsize: tuple = None,
-                subplots_adjust: Dict[str, float] = None,
+                legend_loc: str | None = None,
+                font_family: str | None = None,
+                figsize: tuple | None = None,
+                subplots_adjust: Mapping[str, float] | None = None,
                 errors=None,
                 **subplot_kwargs
                 ):
@@ -335,18 +335,18 @@ def plot_linear(*data,
 
 
 def plot_scatter(*data,
-                 titles: Union[str, List[str]] = None,
+                 titles: str | list[str] | None = None,
                  maxcol: int = 4,
-                 xlabel: str = None,
-                 ylabel: str = None,
-                 xlim: List = None,
-                 ylim: List = None,
+                 xlabel: str | None = None,
+                 ylabel: str | None = None,
+                 xlim: list | None = None,
+                 ylim: list | None = None,
                  padding: float = 0.2,
                  block: bool = True,
-                 legend_loc: str = None,
-                 font_family: str = None,
-                 figsize: tuple = None,
-                 subplots_adjust: Dict[str, float] = None,
+                 legend_loc: str | None = None,
+                 font_family: str | None = None,
+                 figsize: tuple | None = None,
+                 subplots_adjust: Mapping[str, float] | None = None,
                  **subplot_kwargs
                  ):
     """
@@ -412,17 +412,17 @@ def plot_scatter(*data,
 
 
 def plot_box(*data,
-             titles: Union[str, List[str]] = None,
+             titles: str | list[str] | None = None,
              maxcol: int = 4,
-             xlabel: str = None,
-             ylabel: str = None,
-             ylim: List = None,
+             xlabel: str | None = None,
+             ylabel: str | None = None,
+             ylim: list | None = None,
              padding: float = 0.2,
              block: bool = True,
-             legend_loc: str = None,
-             font_family: str = None,
-             figsize: tuple = None,
-             subplots_adjust: Dict[str, float] = None,
+             legend_loc: str | None = None,
+             font_family: str | None = None,
+             figsize: tuple | None = None,
+             subplots_adjust: Mapping[str, float] | None = None,
              **subplot_kwargs
              ):
     __plot(*data,
@@ -443,18 +443,18 @@ def plot_box(*data,
 
 
 def plot_stack(*data,
-                titles: Union[str, List[str]] = None,
+                titles: str | list[str] | None = None,
                 maxcol: int = 4,
-                xlabel: str = None,
-                ylabel: str = None,
-                xlim: List = None,
-                ylim: List = None,
+                xlabel: str | None = None,
+                ylabel: str | None = None,
+                xlim: list | None = None,
+                ylim: list | None = None,
                 padding: float = 0.2,
                 block: bool = True,
-                legend_loc: str = None,
-                font_family: str = None,
-                figsize: tuple = None,
-                subplots_adjust: Dict[str, float] = None,
+                legend_loc: str | None = None,
+                font_family: str | None = None,
+                figsize: tuple | None = None,
+                subplots_adjust: Mapping[str, float] | None = None,
                 **subplot_kwargs
                 ):
 

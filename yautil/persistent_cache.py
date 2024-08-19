@@ -90,7 +90,7 @@ class PersistentCache:
             try:
                 with open(path, 'rb') as f:
                     entry: PersistentCache._Entry = pickle.load(f)
-                assert isinstance(e, PersistentCache._Entry)
+                assert isinstance(entry, PersistentCache._Entry)
             except Exception as e:
                 print(e)
                 continue
