@@ -4,7 +4,7 @@ from typing import Callable, TextIO
 WriteCallback = Callable[[str], str | None]
 
 
-class FilteredTextIO(object):
+class FilteredTextIO(TextIO):
     dest: TextIO
     on_write: WriteCallback
     leftover: str
@@ -21,6 +21,8 @@ class FilteredTextIO(object):
         return getattr(self.dest, item)
 
     def write(self, __buffer):
+        if isinstance(__buffer, bytes) or isinstance(__buffer, bytearray):
+            __buffer = __buffer.decode('utf-8')
         if len(l := __buffer.rsplit('\n', 1)) == 2:
             to_print, leftover = l
         else:
