@@ -4,7 +4,7 @@ import collections.abc
 T = TypeVar('T')
 
 class CheckedList(list, collections.abc.MutableSequence, Generic[T]):
-    on_set: Callable[[Any], T]
+    __on_set: Callable[[Any], T] | None
 
     def __init__(self, iter: Iterator | None = None, on_set: Callable[[Any], T] | None = None):
         self.__on_set = on_set

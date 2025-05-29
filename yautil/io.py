@@ -23,21 +23,26 @@ class FilteredTextIO(TextIO):
     def write(self, __buffer):
         if isinstance(__buffer, bytes) or isinstance(__buffer, bytearray):
             __buffer = __buffer.decode('utf-8')
-        if len(l := __buffer.rsplit('\n', 1)) == 2:
-            to_print, leftover = l
+
+        lines = (self.leftover + __buffer).splitlines(keepends=True)
+
+        if lines[-1].endswith('\n'):
+            to_print = ''.join(lines)
+            self.leftover = ''
         else:
-            self.leftover = l[0]
+            to_print = ''.join(lines[:-1])
+            self.leftover = lines[-1]
+        
+        if not to_print:
             return
 
-        to_write: str | None = self.on_write(self.leftover + to_print + '\n')
+        to_write: str | None = self.on_write(to_print)
 
         if to_write is None:
             return
 
         self.dest.write(to_write)
         self.dest.flush()
-
-        self.leftover = leftover
 
     def writelines(self, __lines) -> None:
         self.dest.writelines(__lines)

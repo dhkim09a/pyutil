@@ -38,7 +38,10 @@ class WarningOption(CheckedList[str]):
 
     def on_set(self, value: str) -> str:
         # print(f'on_set called for {value}')
-        if not self.__choices:
+        if self.__choices is None:
+            return value
+
+        if not isinstance(value, str):
             return value
 
         if value == 'all':
@@ -53,7 +56,7 @@ class WarningOption(CheckedList[str]):
             setattr(self, aname, False)
 
         else:
-            aname = self.attrname(value[3:])
+            aname = self.attrname(value)
             assert hasattr(self, aname)
             setattr(self, aname, True)
 
@@ -61,7 +64,7 @@ class WarningOption(CheckedList[str]):
 
     def __init__(self, *args, choices: ChoiceComb | None = None, **kwargs):
         self.__choices = choices
-        if choices:
+        if choices is not None:
             for c in choices.opts:
                 # print(f'setting attr {self.attrname(c)}')
                 setattr(self, self.attrname(c), None)
@@ -92,7 +95,7 @@ class WarningAction(argparse.Action):
         if const is not None and nargs != argparse.OPTIONAL:
             raise ValueError('nargs must be %r to supply const' % argparse.OPTIONAL)
 
-        if choices:
+        if choices is not None:
             choices = ChoiceComb(choices)
 
         if not metavar:
@@ -103,7 +106,7 @@ class WarningAction(argparse.Action):
             dest=dest,
             nargs=nargs,
             const=const,
-            default=default,
+            default=WarningOption(default, choices=choices),
             type=type,
             choices=choices,
             required=required,
@@ -112,7 +115,7 @@ class WarningAction(argparse.Action):
 
     def __call__(self, parser, namespace, values, option_string=None):
         if self.never_called:
-            setattr(namespace, self.dest, WarningOption(choices=self.choices))
+            setattr(namespace, self.dest, self.default)
             self.never_called = False
 
         items = getattr(namespace, self.dest, None)

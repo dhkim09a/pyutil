@@ -80,6 +80,7 @@ def __find(root: str,
         #    iter_nonblock: bool = False,
            follow_symlinks: str = 'never',
            bufsize: int = 0,
+           serr=sys.stderr,
            ) -> Iterable[str]:
 
     find_opts = []
@@ -122,20 +123,24 @@ def __find(root: str,
             find_opts.extend(['-path', _p.join(root, exclude_dir.pop())])
             if exclude_dir:
                 find_opts.append('-o')
-        find_opts.extend([')', '-prune', '-o', *find_target_opts, '-print'])
+        find_opts.extend([')', '-prune', '-o', *find_target_opts])
     else:
         find_opts.extend(find_target_opts)
 
     if printf:
         find_opts.extend(['-printf', printf])
+    else:
+        find_opts.append('-print')
 
     # print(find_opts)
 
+    __sh_find = sh.find.bake(_ok_code=[0, 1], _err=serr) # type: ignore
+    
     # if not (iter_nonblock or iter) and (rd := get_memtmpdir()):
     if not iter and (rd := get_memtmpdir()):
         # print(f'rd: {rd}')
         find_outs = _p.join(rd.name, 'f')
-        sh.find(*find_opts, _out=find_outs) # type: ignore
+        __sh_find(*find_opts, _out=find_outs) # type: ignore
 
         with open(find_outs, 'r') as f:
             # while line := f.readline():
@@ -147,7 +152,7 @@ def __find(root: str,
     elif bufsize > 1:
         remainings: str = ''
         # for path in sh.find(*find_opts, _iter_noblock=iter_nonblock, _iter=iter, _out_bufsize=bufsize): # type: ignore
-        for path in sh.find(*find_opts, _iter=iter, _out_bufsize=bufsize): # type: ignore
+        for path in __sh_find(*find_opts, _iter=iter, _out_bufsize=bufsize): # type: ignore
             if not path:
                 continue
             lines = str(path).split('\n')
@@ -166,7 +171,7 @@ def __find(root: str,
             yield(remainings)
     else:
         # for path in sh.find(*find_opts, _iter_noblock=iter_nonblock, _iter=iter): # type: ignore
-        for path in sh.find(*find_opts, _iter=iter): # type: ignore
+        for path in __sh_find(*find_opts, _iter=iter): # type: ignore
             if not path:
                 continue
             yield str(path).strip()
@@ -182,6 +187,7 @@ def find(root: str,
         #  iter_nonblock: bool = False,
          follow_symlinks: str = 'never',
          bufsize: int = 0,
+         serr=sys.stderr,
          ) -> Iterable[str]:
     ret = __find(
         root=root,
@@ -194,6 +200,7 @@ def find(root: str,
         # iter_nonblock=iter_nonblock,
         follow_symlinks=follow_symlinks,
         bufsize=bufsize,
+        serr=serr,
     )
     # if iter or iter_nonblock:
     if iter:
