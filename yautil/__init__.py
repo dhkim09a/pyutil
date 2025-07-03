@@ -28,7 +28,7 @@ def tryimport(name, globals={}, locals={}, fromlist=[], level=-1):
 
 realimport, builtins.__import__ = builtins.__import__, tryimport
 
-from .argparse import WarningAction
+from .argparse import WarningAction, SplitAppendAction
 from .file import remove_contents, find_recursive, overwrite, get_memtmpdir, find
 from .decorators import static_vars
 from .event import EventGenerator, Event

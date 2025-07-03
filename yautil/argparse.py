@@ -17,6 +17,22 @@ class OverridingAppendAction(argparse._AppendAction):
         super().__call__(parser, namespace, values, option_string)
 
 
+class SplitAppendAction(argparse._AppendAction):
+    first_call: bool = True
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if self.first_call:
+            setattr(namespace, self.dest, [])
+            self.first_call = False
+
+        if not isinstance(values, str):
+            super().__call__(parser, namespace, values, option_string)
+            return
+
+        for v in values.split(','):
+            super().__call__(parser, namespace, v.strip(), option_string)
+
+
 class ChoiceComb(set[str]):
     metaopts: set[str]
     opts: set[str]
@@ -32,7 +48,7 @@ class ChoiceComb(set[str]):
 
 class WarningOption(CheckedList[str]):
     __choices: ChoiceComb | None
-    
+
     def attrname(self, optname: str) -> str:
         return re.sub(r'[^a-zA-Z0-9]', '_', optname).strip('_')
 
