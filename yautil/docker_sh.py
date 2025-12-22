@@ -136,6 +136,7 @@ def docker_sh(
         dockerfile: str = 'Dockerfile',
         gpus: Union[str, Literal['all', False]] = False,
         builder: Optional[str] = None,
+        interactive: bool = True,
         _cwd: str | None = None,
 ) -> sh.Command:
 
@@ -190,8 +191,8 @@ def docker_sh(
     run = sh.docker.run.bake( # type: ignore
         *docker_run_opts,
         '-d=false',
-        i=True,
-        t=True,
+        i=interactive,
+        t=interactive,
         rm=bool(auto_remove),  # Automatically remove the container when it exits
         workdir=_p.realpath(_cwd) if _cwd else home,
         gpus=gpus,

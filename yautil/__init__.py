@@ -35,6 +35,7 @@ from .event import EventGenerator, Event
 from .print import decomment_cxx, strcompare, auto_print
 from .plot import plot_cdf, plot_linear, plot_scatter, plot_box, plot_stack
 from .lru_cache_ext import lru_cache
+from .passwd import create_w_password, create_w_secrets
 from .persistent_cache import PersistentCache
 from .docker_sh import docker_sh, AuthorizationError
 from .git import git_expand
