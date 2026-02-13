@@ -290,6 +290,7 @@ def create_w_password(
         An object of type T created by the constructor, or None if all retry attempts fail.
         
     Example:
+        ``` python
         def connect_to_ssh(password):
             try:
                 return SSHConnection('user@host.com', password)
@@ -300,6 +301,7 @@ def create_w_password(
             constructor=connect_to_ssh,
             servicename='ssh_host'
         )
+        ```
     """
     def _constructor(secrets: dict[str, str]) -> T | None:
         return constructor(secrets['Password'])
