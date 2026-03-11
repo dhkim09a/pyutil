@@ -29,7 +29,7 @@ def tryimport(name, globals={}, locals={}, fromlist=[], level=-1):
 realimport, builtins.__import__ = builtins.__import__, tryimport
 
 from .argparse import WarningAction, SplitAppendAction
-from .file import remove_contents, find_recursive, overwrite, get_memtmpdir, find
+from .file import remove_contents, find_recursive, overwrite, get_memtmpdir, find, Writable
 from .decorators import static_vars
 from .event import EventGenerator, Event
 from .print import decomment_cxx, strcompare, auto_print
@@ -38,7 +38,7 @@ from .lru_cache_ext import lru_cache
 from .passwd import create_w_password, create_w_secrets
 from .persistent_cache import PersistentCache
 from .docker_sh import docker_sh, AuthorizationError
-from .git import git_expand
+from .git import git_expand, git_merge_file
 from .io import FilteredTextIO
 from .pysh import compile_shargs, get_cmd_args
 

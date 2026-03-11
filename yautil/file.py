@@ -5,6 +5,7 @@ import subprocess
 import sys
 import tempfile
 from os import path as _p
+import stat
 from typing import Iterable, Union, Optional, Literal
 
 import sh
@@ -22,6 +23,29 @@ def remove_contents(folder: str):
                 shutil.rmtree(file_path)
         except Exception as e:
             print('Failed to delete %s. Reason: %s' % (file_path, e))
+
+
+class Writable:
+    modes: dict[str, int]
+
+    def __init__(self, *files: str) -> None:
+        self.modes = {f: os.stat(f).st_mode for f in files if f and _p.isfile(f)}
+
+    def __enter__(self):
+        for file, mode in self.modes.items():
+            if not _p.exists(file):
+                continue
+            if (mode := os.stat(file).st_mode) & stat.S_IWUSR:
+                continue
+
+            os.chmod(file, mode | stat.S_IWUSR)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for file, mode in self.modes.items():
+            cur_mode = os.stat(file).st_mode
+            if cur_mode == mode:
+                continue
+            os.chmod(file, mode)
 
 
 def find_recursive_unix(root: str, name_patterns: Optional[list] = None, ignored_dirs=None, type='any', depth=-1, sort=False):

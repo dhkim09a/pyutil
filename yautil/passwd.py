@@ -3,7 +3,10 @@ import getpass
 import os
 from os import PathLike, path as _p
 import readline
+import sys
 import tempfile
+import textwrap
+from time import sleep
 from typing import Any, Callable, Literal, TypeVar
 
 import keyring
@@ -163,10 +166,24 @@ def ensure_unlocked():
     by prompting the user for their password and running the gnome-keyring-daemon.
     """
     try:
+        if 'gnome-keyring-daemon' not in str(sh.ps(e=True, f=True)):
+            raise keyring.errors.InitError
         keyring.get_password('__test__', '__test__')
-    except keyring.errors.InitError:
-        gnome_keyring = sh.Command('gnome-keyring-daemon')
-        gnome_keyring(r=True, d=True, unlock=True, _in=getpass.getpass(f'Password of {getpass.getuser()}'))
+    except (keyring.errors.InitError, keyring.errors.KeyringLocked):
+        # login_dbus_env = os.environ.copy()
+        # login_dbus_env |= {(e := l.strip().split('=', maxsplit=1))[0]: e[1] for l in str(sh.Command('dbus-launch')()).splitlines()}
+        # gnome_keyring = sh.Command('gnome-keyring-daemon').bake(_env=login_dbus_env)
+
+        # gnome_keyring = sh.Command('gnome-keyring-daemon')
+        # sh.killall('gnome-keyring-daemon', _ok_code=[0,1])
+        # passwd = getpass.getpass(f'\rPassword of {getpass.getuser()}: ')
+        # gnome_keyring(unlock=True, d=True, r=True, _in=passwd)
+        print(textwrap.dedent('''
+            Please run the following command in your terminal and try again:
+              killall gnome-keyring-daemon
+              echo $YOUR_PASSWORD | gnome-keyring-daemon --unlock --daemonize --replace
+            Please ensure that "Login" collection is unlocked in `seahorse`.
+        '''))
         keyring.get_password('__test__', '__test__')
 
 
@@ -228,14 +245,21 @@ def create_w_secrets(
            - Uses OpenSSL AES-256-CBC to encrypt/decrypt the secrets file
            - Prompts for master password if needed
     """
+
+    ensure_unlocked()
+
     if backend == 'keyring':
-        return __create_w_secrets(
-            constructor = constructor,
-            secret_desc = secret_desc,
-            retry = retry,
-            load_secrets = lambda: {k: v for k in secret_desc if (v := keyring.get_password(servicename, k))},
-            save_secrets = lambda secrets: [keyring.set_password(servicename, k, v) for k, v in secrets.items()],
-        )
+        try:
+            return __create_w_secrets(
+                constructor = constructor,
+                secret_desc = secret_desc,
+                retry = retry,
+                load_secrets = lambda: {k: v for k in secret_desc if (v := keyring.get_password(servicename, k))},
+                save_secrets = lambda secrets: [keyring.set_password(servicename, k, v) for k, v in secrets.items()],
+            )
+        except keyring.errors.KeyringLocked as e:
+            print(f'error: {e}', file=sys.stderr)
+            return
 
     masterkey_desc: str = f'Password for {backend}'
 
@@ -246,8 +270,6 @@ def create_w_secrets(
         if _p.exists(backend) and load_secrets(masterkey, backend) is None:
             return
         return masterkey
-
-    ensure_unlocked()
 
     masterkey = __create_w_secrets(
         constructor = construct_masterkey,
@@ -311,3 +333,78 @@ def create_w_password(
         {'Password': True},
         retry=retry,
     )
+
+
+# class InvalidSecretsError(Exception):
+#     pass
+
+
+# class InvalidPasswordError(InvalidSecretsError):
+#     pass
+
+
+# class _Attempt:
+#     secrets: dict[str, str]
+    
+#     __servicename: str
+#     __secret_desc: dict[str, bool]
+#     __retry: int = 2
+#     __backend: Literal['keyring'] | str
+
+#     def __init__(
+#         self,
+#         servicename: str,
+#         secret_desc: dict[str, bool],
+#         retry: int = 2,
+#         backend: Literal['keyring'] | str = 'keyring',
+#     ) -> None:
+#         self.__servicename = servicename
+#         self.__secret_desc = secret_desc
+#         self.__retry = retry
+#         self.__backend = backend
+
+#     def __enter__(self):
+#         return self
+    
+#     def __exit__(self, exc_type, exc, tb):
+#         if exc_type is InvalidSecretsError:
+#             return True
+
+
+# class SecretPrompt:
+#     __servicename: str
+#     __secret_desc: dict[str, bool]
+#     __retry: int = 2
+#     __backend: Literal['keyring'] | str
+
+#     def __init__(
+#         self,
+#         servicename: str,
+#         secret_desc: dict[str, bool],
+#         retry: int = 2,
+#         backend: Literal['keyring'] | str = 'keyring',
+#     ) -> None:
+#         self.__servicename = servicename
+#         self.__secret_desc = secret_desc
+#         self.__retry = retry
+#         self.__backend = backend
+
+#     def __iter__(self) -> _Attempt:
+#         for c in range(self.__retry + 1):
+            
+
+
+# class PasswordPrompt(SecretPrompt):
+#     def __init__(
+#         self,
+#         servicename: str,
+#         retry: int = 2,
+#     ):
+#         super().__init__(
+#             servicename=servicename,
+#             secret_desc={'Password': True},
+#             retry=retry,
+#         )
+
+#     def __iter__(self) -> _Attempt:
+#         pass
