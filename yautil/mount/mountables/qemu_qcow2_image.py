@@ -1,7 +1,6 @@
 import glob
 import re
 import time
-from typing import Union, List
 import os
 from os import path as _p
 
@@ -19,7 +18,7 @@ class QemuNbdHandle(BlockDevHandle):
     def __init__(self, img: str):
         self.__img = img
 
-    def find_free_nbd_dev(self):
+    def find_free_nbd_dev(self) -> str:
         nbd_dev_avail = None
         modules, sizes, deps = zip(*[l.split(maxsplit=2) for l in str(sh.lsmod()).splitlines()]) # type: ignore
 
@@ -61,7 +60,7 @@ class QemuNbdHandle(BlockDevHandle):
 
         return self.base_dev
 
-    def unmap(self):
+    def unmap(self) -> None:
         if self.__dev:
             sh.sudo('qemu-nbd', '--disconnect', self.__dev, _fg=True) # type: ignore
             self.__dev = None
@@ -74,7 +73,7 @@ class QemuNbdHandle(BlockDevHandle):
     def devs(self) -> list[str]:
         return [*filter(lambda d: re.search(fr'{self.base_dev}[a-zA-Z]', d), glob.glob('/dev/*'))]
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.unmap()
 
 
@@ -87,12 +86,13 @@ class QemuQcow2Image(Mountable):
         super().__init__(file)
         self.__dev = dev
 
-    def _mount(self, file: str, mode: str, mount_point: str):
+    def _mount(self, file: str, mode: str, mount_point: str) -> str:
         assert self.__dev
 
         sh.sudo.mount(self.__dev, mount_point, _fg=True)
+        return mount_point
 
-    def _umount(self, mount_point):
+    def _umount(self, mount_point: str) -> None:
         sh.sudo.umount(mount_point, _fg=True)
 
     @classmethod
@@ -102,11 +102,11 @@ class QemuQcow2Image(Mountable):
         return bool(re.search(r'^QEMU QCOW2 Image', file_cmd_out))
 
     @property
-    def partitions(self) -> Union[list, None]:
+    def partitions(self) -> list[Mountable] | None:
         if self.__dev:
             return None
 
-        if self.__partitions:
+        if self.__partitions is not None:
             return self.__partitions
 
         self.__nbd_ctx.map()

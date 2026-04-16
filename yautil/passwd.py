@@ -166,7 +166,7 @@ def ensure_unlocked():
     by prompting the user for their password and running the gnome-keyring-daemon.
     """
     try:
-        if 'gnome-keyring-daemon' not in str(sh.ps(e=True, f=True)):
+        if 'gnome-keyring-daemon' not in str(sh.ps(e=True, f=True)): # type: ignore
             raise keyring.errors.InitError
         keyring.get_password('__test__', '__test__')
     except (keyring.errors.InitError, keyring.errors.KeyringLocked):
@@ -181,7 +181,7 @@ def ensure_unlocked():
         print(textwrap.dedent('''
             Please run the following command in your terminal and try again:
               killall gnome-keyring-daemon
-              echo $YOUR_PASSWORD | gnome-keyring-daemon --unlock --daemonize --replace
+              read -sp "Password: " _tmp_pw && echo && echo $_tmp_pw | gnome-keyring-daemon --unlock --daemonize --replace ; unset _tmp_pw
             Please ensure that "Login" collection is unlocked in `seahorse`.
         '''))
         keyring.get_password('__test__', '__test__')

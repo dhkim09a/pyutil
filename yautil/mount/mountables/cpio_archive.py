@@ -4,11 +4,11 @@ from yautil.mount import Archive
 
 
 class CpioArchive(Archive):
-    def _extract(self, file: str, target_dir: str):
+    def _extract(self, file: str, target_dir: str) -> None:
         with open(file, 'r') as f:
             sh.cpio(sh.gzip(d=True, k=True, _in=f), i=True, _cwd=target_dir) # type: ignore
 
-    def _archive(self, file: str, source_dir: str):
+    def _archive(self, file: str, source_dir: str) -> None:
         # sh.gzip(sh.mkbootfs(source_dir), _out=file)
         raise NotImplementedError
 

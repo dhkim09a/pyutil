@@ -1,16 +1,17 @@
 import time
 
-import sh as sh
+import sh
 
 from ..core import Mountable
 
 
 class Qcow2Image(Mountable):
-    def _mount(self, file: str, mode: str, mount_point: str):
+    def _mount(self, file: str, mode: str, mount_point: str) -> str:
         sh.nbdfuse(mount_point, '--socket-activation', 'qemu-nbd', file, _bg=True) # type: ignore
         time.sleep(1)
+        return mount_point
 
-    def _umount(self, mount_point):
+    def _umount(self, mount_point: str) -> None:
         # use '-uz' to force unmount https://stackoverflow.com/a/25986155/3836385
         sh.fusermount3('-uz', mount_point) # type: ignore
 

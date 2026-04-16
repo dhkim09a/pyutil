@@ -34,11 +34,13 @@ class MountPoint:
     __mountable: Mountable
     __mode: str
     __mount_point: str
-    __tmpdir: TemporaryDirectory
+    __tmpdir: TemporaryDirectory | None = None
+    __initial_mount_point: str | None = None
 
     def __init__(self, mountable: Mountable, mode: str, mount_point: str | None):
         self.__mountable = mountable
         self.__mode = mode
+        self.__initial_mount_point = mount_point
 
         if not mount_point:
             self.__tmpdir = TemporaryDirectory(prefix='yautil-mountutil-')
@@ -50,6 +52,10 @@ class MountPoint:
     @property
     def name(self) -> str:
         return self.__mount_point
+
+    @name.setter
+    def name(self, value: str) -> None:
+        self.__mount_point = value
 
     def umount(self):
         if not self.__mountable._is_mounted:
@@ -93,7 +99,7 @@ class Mountable:
 
         self.__file = file
 
-    def _mount(self, file: str, mode: str, mount_point: str):
+    def _mount(self, file: str, mode: str, mount_point: str) -> str:
         raise NotImplementedError
 
     def _umount(self, mount_point):
@@ -134,7 +140,7 @@ class Archive(Mountable):
     def _archive(self, file: str, source_dir: str):
         raise NotImplementedError
 
-    def _mount(self, file: str, mode: str, mount_point: str):
+    def _mount(self, file: str, mode: str, mount_point: str) -> str:
         if mode == 'r':
             self.ro = True
         elif mode == 'rw':
@@ -143,6 +149,7 @@ class Archive(Mountable):
             raise ValueError('mode must be either \'r\' or \'rw\'')
 
         self._extract(file, mount_point)
+        return mount_point
 
     def _umount(self, mount_point):
         if not self.ro:

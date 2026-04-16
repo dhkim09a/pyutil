@@ -33,14 +33,14 @@ class SplitAppendAction(argparse._AppendAction):
             super().__call__(parser, namespace, v.strip(), option_string)
 
 
-class ChoiceComb(set[str]):
+class ChoiceComb(list[str]):
     metaopts: set[str]
-    opts: set[str]
+    opts: list[str]
 
-    def __init__(self, opts: Iterable[str]):
+    def __init__(self, opts: Iterable[str], no_opts: bool = False):
         self.metaopts = {'all'}
-        self.opts = set(opts)
-        super(ChoiceComb, self).__init__([*self.metaopts] + list(opts) + ['no-' + c for c in opts])
+        self.opts = list(opts)
+        super(ChoiceComb, self).__init__([*self.metaopts] + list(opts) + (['no-' + c for c in opts] if no_opts else []))
 
     def __contains__(self, o: object) -> bool:
         return all(super(ChoiceComb, self).__contains__(c) for c in str(o).split(','))
@@ -87,6 +87,100 @@ class WarningOption(CheckedList[str]):
         super(WarningOption, self).__init__(*args, on_set=self.on_set, **kwargs)
 
 
+class SmartAppendAction(argparse._AppendAction):
+    """
+    Action that supports:
+    1. Appending values to a list
+    2. Splitting comma-separated values
+    3. Choice validation with 'all' option
+    4. Default values that can be overridden
+    """
+    choices: ChoiceComb | None
+
+    def __init__(self,
+                 option_strings,
+                 dest,
+                 nargs=None,
+                 const=None,
+                 default=None,
+                 type=None,
+                 choices=None,
+                 required=False,
+                 help=None,
+                 metavar=None):
+        if nargs == 0:
+            raise ValueError('nargs for append actions must be != 0; if arg '
+                             'strings are not supplying the value to append, '
+                             'the append const action may be more appropriate')
+        if const is not None and nargs != argparse.OPTIONAL:
+            raise ValueError('nargs must be %r to supply const' % argparse.OPTIONAL)
+
+        # Process choices
+        if choices is not None:
+            choices = ChoiceComb(choices, no_opts=False)
+        
+        self.choices = choices
+        self.first_call = True
+
+        super(SmartAppendAction, self).__init__(
+            option_strings=option_strings,
+            dest=dest,
+            nargs=nargs,
+            const=const,
+            default=default,
+            type=type,
+            choices=choices,
+            required=required,
+            help=help,
+            metavar=metavar)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # Initialize the list on first call to override default value
+        if self.first_call:
+            setattr(namespace, self.dest, [])
+            self.first_call = False
+
+        # Get the current items
+        items = getattr(namespace, self.dest, None)
+        if items is None:
+            items = []
+        
+        # Handle values - split comma-separated strings
+        values_to_add = []
+        if isinstance(values, str):
+            # Split comma-separated values
+            for v in values.split(','):
+                stripped_v = v.strip()
+                # Handle 'all' option
+                if stripped_v == 'all' and self.choices is not None:
+                    # Add all choices (except meta options like 'all' itself)
+                    values_to_add.extend(list(self.choices.opts))
+                else:
+                    values_to_add.append(stripped_v)
+        else:
+            # Handle non-string values (lists, etc.)
+            if isinstance(values, (list, tuple)):
+                for v in values:
+                    if isinstance(v, str) and ',' in v:
+                        # Split comma-separated values in lists too
+                        for sv in v.split(','):
+                            values_to_add.append(sv.strip())
+                    else:
+                        values_to_add.append(v)
+            else:
+                values_to_add.append(values)
+        
+        # Validate choices if specified
+        if self.choices is not None:
+            for v in values_to_add:
+                if v not in self.choices:
+                    raise ValueError(f"Invalid choice: {v} (choose from {self.choices})")
+        
+        # Extend the items list
+        items.extend(values_to_add)
+        setattr(namespace, self.dest, items)
+
+
 class WarningAction(argparse.Action):
     never_called: bool
     choices: ChoiceComb | None
@@ -112,7 +206,7 @@ class WarningAction(argparse.Action):
             raise ValueError('nargs must be %r to supply const' % argparse.OPTIONAL)
 
         if choices is not None:
-            choices = ChoiceComb(choices)
+            choices = ChoiceComb(choices, no_opts=True)
 
         if not metavar:
             metavar = 'WARNING_OPTS'

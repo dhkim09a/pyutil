@@ -23,7 +23,11 @@ def mount(file: Union[str, Mountable], mode: str = 'rw', mount_point: str | None
     mp = MountPoint(file, mode, mount_point)
 
     file._is_mounted = True
-    file._mount(file.name, mode, mp.name)
+    actual_mount_point = file._mount(file.name, mode, mp.name)
+    
+    # If _mount returned a different mount point, update the MountPoint object
+    if actual_mount_point is not None and actual_mount_point != mp.name:
+        mp.name = actual_mount_point
 
     return mp
 

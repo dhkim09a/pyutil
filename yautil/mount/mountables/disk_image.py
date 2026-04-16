@@ -1,5 +1,4 @@
 import re
-from typing import Union
 
 import sh
 
@@ -15,7 +14,7 @@ class DiskImage(Mountable):
         super().__init__(file)
         self.__in_qcow2 = in_qcow2
 
-    def __iter_partitions(self):
+    def __iter_partitions(self) -> list[tuple[int, int, str]]:
         rc = str(sh.fdisk(self.name, l=True, o='Start,End,Sectors,Type', color='never', _iter=True)) # type: ignore
         sector_size = 512
 
@@ -28,6 +27,7 @@ class DiskImage(Mountable):
             if not line:
                 break
 
+        result = []
         for line in rc:
             line = str(line).strip()
 
@@ -42,12 +42,14 @@ class DiskImage(Mountable):
             assert end - start + 1 == sectors
             # print(f'start: {start}, sector_size: {sector_size}')
 
-            yield start * sector_size, sectors * sector_size, type.strip()
+            result.append((start * sector_size, sectors * sector_size, type.strip()))
 
-    def _mount(self, file: str, mode: str, mount_point: str):
+        return result
+
+    def _mount(self, file: str, mode: str, mount_point: str) -> None:
         assert False
 
-    def _umount(self, mount_point):
+    def _umount(self, mount_point: str) -> None:
         assert False
 
     @classmethod
@@ -57,8 +59,8 @@ class DiskImage(Mountable):
         return r'boot sector' in file_cmd_out
 
     @property
-    def partitions(self) -> Union[list[Mountable | None], None]:
-        if self.__partitions is None:
+    def partitions(self) -> list[Mountable | None] | None:
+        if self.__partitions is not None:
             return self.__partitions
 
         self.__partitions = []

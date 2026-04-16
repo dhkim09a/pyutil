@@ -24,7 +24,7 @@ class __UdisksctlAuth:
                 print(self.stdout)
                 raise Exception(fr'cannot find user {getpass.getuser()} from the list')
             sin = m['no'] + '\n'
-        if self.stdout.endswith('Password: '):
+        if self.stdout.endswith('Pad: '):
             try:
                 pw = keyring.get_password(self.SERVICE, getpass.getuser())
                 assert pw
@@ -47,17 +47,20 @@ def udisksctl(*args, _auth: bool = False, **kwargs) -> str:
     if _auth:
         uauth = __UdisksctlAuth()
 
-        sh.udisksctl(*args, **kwargs,
+        sh.udisksctl(*args, **kwargs, # type: ignore
                      _tty_in=True, _tty_out=True, _unify_ttys=True,
                      _out=uauth.udisksctl_auth, _out_bufsize=0)
         return uauth.stdout
     else:
-        return str(sh.udisksctl(*args, **kwargs))
+        return str(sh.udisksctl(*args, **kwargs)) # type: ignore
 
 
-def udisksctl_losetup(image) -> str:
+def udisksctl_losetup(image, offset: int = 0) -> str:
     try:
-        sout = udisksctl('loop-setup', file=image, _auth=True)
+        cmd_args = ['loop-setup']
+        if offset > 0:
+            cmd_args.extend(['--offset', str(offset)])
+        sout = udisksctl(*cmd_args, file=image, _auth=True)
     except Exception:
         raise Exception(fr'failed to open {image}')
 
@@ -70,13 +73,13 @@ def udisksctl_losetup(image) -> str:
     return m['dev']
 
 
-def udisksctl_mount(loop_dev) -> str:
+def udisksctl_mount(loop_dev, opts: str = 'rw') -> str:
     try:
-        sout = udisksctl('mount', b=loop_dev, o='rw', _auth=True)
+        sout = udisksctl('mount', b=loop_dev, o=opts, _auth=True)
     except Exception:
         raise Exception('')
 
-    if not (m := re.search(fr'Mounted {loop_dev} at (?P<dir>[^\s]*)\.', sout)):
+    if not (m := re.search(fr'Mounted {loop_dev} at (?P<dir>[^\s]*)', sout)):
         raise Exception(fr'failed to mount {loop_dev}')
 
     return m['dir']

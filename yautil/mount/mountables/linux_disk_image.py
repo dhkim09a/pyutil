@@ -1,3 +1,4 @@
+from typing import Literal
 import re
 
 import sh
@@ -10,12 +11,13 @@ class UDisksCtlCtx:
     __dev: str | None = None
     __mount_point: str | None = None
 
-    def mount(self, image: str):
-        self.__dev = udisksctl_losetup(image)
+    def mount(self, image: str, offset: int = 0) -> str:
+        self.__dev = udisksctl_losetup(image, offset=offset)
 
         self.__mount_point = udisksctl_mount(self.__dev)
+        return self.__mount_point
 
-    def umount(self):
+    def umount(self) -> None:
         if self.__mount_point:
             udisksctl('unmount', b=self.__dev)
             self.__mount_point = None
@@ -27,49 +29,55 @@ class UDisksCtlCtx:
 
 class LinuxDiskImage(Mountable):
     __offset: int
-    __lomode: str = 'mount'
-    __mntmode: str = 'mount'
+    __lomode: Literal['mount', 'losetup', 'udisksctl'] = 'mount'
+    __mntmode: Literal['mount', 'udisksctl'] = 'mount'
     __dev: str | None = None
 
-    def __init__(self, file: str, offset=0, lomode='mount', mntmode='mount'):
+    def __init__(
+        self,
+        file: str,
+        offset: int = 0,
+        lomode: Literal['mount', 'losetup', 'udisksctl'] = 'mount',
+        mntmode: Literal['mount', 'udisksctl'] = 'mount'
+    ):
         super().__init__(file)
 
-        if not (lomode == 'mount' or lomode == 'udisksctl' or lomode == 'losetup'):
+        if lomode not in ['mount', 'losetup', 'udisksctl']:
             raise ValueError
 
-        # dhkim: TODO
-        # if not (mntmode == 'mount' or mntmode == 'udisksctl'):
-        if not (mntmode == 'mount'):
+        if mntmode not in ['mount', 'udisksctl']:
             raise ValueError
 
         self.__offset = offset
         self.__lomode = lomode
         self.__mntmode = mntmode
 
-    def _mount(self, file: str, mode: str, mount_point: str):
+    def _mount(self, file: str, mode: str, mount_point: str) -> str:
         if self.__lomode == 'mount':
             sh.sudo.mount(file, mount_point, o=f'offset={self.__offset}', _fg=True)
-            return
+            return mount_point
         elif self.__lomode == 'losetup':
             self.__dev = str(sh.losetup(f=True)) # type: ignore
             sh.sudo.losetup(self.__dev, file, _fg=True)
         elif self.__lomode == 'udisksctl':
-            self.__dev = udisksctl_losetup(file)
+            self.__dev = udisksctl_losetup(file, offset=self.__offset)
         else:
             raise ValueError
 
-        print('mount: ' + self.__dev)
+        # print('mount: ' + self.__dev)
 
         assert self.__dev
 
         if self.__mntmode == 'mount':
             sh.sudo.mount(self.__dev, mount_point, o=f'loop,offset={self.__offset}', _fg=True)
+            return mount_point
         elif self.__mntmode == 'udisksctl':
-            mount_point = udisksctl_mount(self.__dev)
+            actual_mount_point = udisksctl_mount(self.__dev, opts=mode)
+            return actual_mount_point
         else:
             raise ValueError
 
-    def _umount(self, mount_point):
+    def _umount(self, mount_point: str) -> None:
         if self.__lomode == 'mount':
             sh.sudo.umount(mount_point, _fg=True)
             return
