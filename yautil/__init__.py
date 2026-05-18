@@ -19,7 +19,7 @@ class DummyModule(ModuleType):
     __all__ = []  # support wildcard imports
 
 
-def tryimport(name, globals={}, locals={}, fromlist=[], level=-1):
+def tryimport(name, globals={}, locals={}, fromlist=[], level=0):
     try:
         return realimport(name, globals, locals, fromlist, level)
     except ImportError:
