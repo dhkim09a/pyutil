@@ -181,7 +181,7 @@ def ensure_unlocked():
         print(textwrap.dedent('''
             Please run the following command in your terminal and try again:
               killall gnome-keyring-daemon
-              read -sp "Password: " _tmp_pw && echo && echo $_tmp_pw | gnome-keyring-daemon --unlock --daemonize --replace ; unset _tmp_pw
+              read -sp "password: " _tmp_pw && echo && echo $_tmp_pw | gnome-keyring-daemon --unlock --daemonize --replace ; unset _tmp_pw
             Please ensure that "Login" collection is unlocked in `seahorse`.
         '''))
         keyring.get_password('__test__', '__test__')

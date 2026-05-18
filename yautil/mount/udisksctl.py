@@ -24,7 +24,7 @@ class __UdisksctlAuth:
                 print(self.stdout)
                 raise Exception(fr'cannot find user {getpass.getuser()} from the list')
             sin = m['no'] + '\n'
-        if self.stdout.endswith('Pad: '):
+        if self.stdout.endswith('Password: '):
             try:
                 pw = keyring.get_password(self.SERVICE, getpass.getuser())
                 assert pw
