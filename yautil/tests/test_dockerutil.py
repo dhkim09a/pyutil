@@ -47,7 +47,7 @@ class TestDocker(TestCase):
         with open(dockerfile, 'w+') as f:
             f.write('FROM ubuntu')
 
-        c = docker_sh(ctx, root=True)
+        c = docker_sh(ctx, root=True, interactive=False)
 
         assert str(c.echo('-n', 'hello')) == 'hello'
 
@@ -66,7 +66,7 @@ class TestDocker(TestCase):
         with open(dockerfile, 'w+') as f:
             f.write('FROM ubuntu')
 
-        c = docker_sh(ctx)
+        c = docker_sh(ctx, interactive=False)
 
         assert str(c.echo('-n', 'hello')) == 'hello'
 
@@ -85,7 +85,7 @@ class TestDocker(TestCase):
         with open(dockerfile, 'w+') as f:
             f.write('FROM ubuntu')
 
-        c = docker_sh(ctx, verbose=True)
+        c = docker_sh(ctx, verbose=True, interactive=False)
 
         assert str(c.echo('-n', 'hello')) == 'hello'
 
