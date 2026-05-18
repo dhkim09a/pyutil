@@ -193,12 +193,18 @@ def __find(root: str,
         if remainings:
             # print(remainings)
             yield(remainings)
-    else:
-        # for path in sh.find(*find_opts, _iter_noblock=iter_nonblock, _iter=iter): # type: ignore
-        for path in __sh_find(*find_opts, _iter=iter): # type: ignore
+    elif iter:
+        for path in __sh_find(*find_opts, _iter=True): # type: ignore
             if not path:
                 continue
             yield str(path).strip()
+    else:
+        # _iter=False: sh returns the full result; iterating it would yield
+        # characters, not lines. Split on newlines explicitly.
+        result = __sh_find(*find_opts) # type: ignore
+        for line in str(result).splitlines():
+            if line:
+                yield line.strip()
 
 
 def find(root: str,

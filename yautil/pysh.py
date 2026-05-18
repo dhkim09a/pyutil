@@ -4,17 +4,21 @@ from typing import Tuple
 import sh
 
 
+def _as_str(x) -> str:
+    return x if isinstance(x, str) else x.decode('utf-8')
+
+
 def get_cmd_args(cmd: sh.Command):
     args = [cmd._path]
     if cmd._partial:
         args.extend(cmd._partial_baked_args)
-    return [e.decode('utf-8') for e in args]
+    return [_as_str(e) for e in args]
 
 
 def compile_shargs(*args, **kwargs) -> Tuple[list, dict]:
     shcmd = sh.Command('/bin/ls').bake(*args, **kwargs)
     return (
-        [a.decode('utf-8') for a in shcmd._partial_baked_args],
+        [_as_str(a) for a in shcmd._partial_baked_args],
         {'_' + k: i for k, i in shcmd._partial_call_args.items()}
     )
 

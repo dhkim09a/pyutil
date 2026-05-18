@@ -13,6 +13,8 @@ def package_files(directory):
 deps = [
     'sh',
     'matplotlib',
+    'typing_extensions',
+    'keyring',
 ]
 
 with open("README.md", "r") as fh:
