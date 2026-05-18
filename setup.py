@@ -21,14 +21,14 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="yautil", # Replace with your own username
-    version="0.0.68",
+    name="yautil",
+    version="0.0.69",
     author="Donghwi Kim",
-    author_email="dh.tony.kim@samsung.com",
+    author_email="dhkim09a@gmail.com",
     description="Yet Another Python util.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.sec.samsung.net/dh-tony-kim/pyutil",
+    url="https://github.com/dhkim09a-org/yautil",
     packages=setuptools.find_packages(),
     # classifiers=[
     #     "Programming Language :: Python :: 3",
